@@ -1,3 +1,4 @@
+import { Hash } from "crypto"
 import { Entity, PrimaryGeneratedColumn, Column } from "typeorm"
 
 @Entity()
@@ -16,5 +17,5 @@ export class User {
     age: number
 
     @Column()
-    friends: User[]
+    password: string
 }

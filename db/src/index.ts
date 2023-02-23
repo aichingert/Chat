@@ -12,6 +12,7 @@ AppDataSource.initialize().then(async () => {
     const app: express = express();
     const portNumber: number = 3000;
     let controller: UserController = new UserController;
+    
     app.use(bodyParser.json());
 
     // register express routes from defined application routes
@@ -33,7 +34,7 @@ AppDataSource.initialize().then(async () => {
     app.post('/login', async (req: Request, res: Response) => {
         let user: User = req.json();
 
-        let userList: User[] = await controller.all(req, res, () => {});
+        let userList: User[] = await controller.all();
 
         if(userList.find(u => u === user)){
             // gefunden
@@ -46,55 +47,30 @@ AppDataSource.initialize().then(async () => {
     });
     
     app.post('/register', async (req: Request, res: Response) => {
-        await controller.save(req, res, () => {});
+        let user: User = JSON.parse(req.body);
+
+        await controller.save(user);
     });
     
     app.get('/friends/:userId', async (req: Request, res: Response) => {
-        let user: User | string = await controller.one(req,res, () => {});
+        let user: User | string = await controller.one(req.params.userId);
         
         if(user instanceof User){
-            res.send(JSON.stringify(user.friends, null, '\t'));
+            // waiting for controller            
+
             res.sendStatus(302);
         }
         else{
             res.sendStatus(404);
         }
-
     });
     
     app.route('/friends/:userId/:friendId')
         .put(async (req: Request, res: Response) => {
-            let userList: User[] = await controller.all(req, res, () => {});
-
-            let user: User = userList.find(u => u.id === req.params.userId);
-            let friend: User = userList.find(u => u.id === req.params.friendId);
-
-            if(user instanceof undefined || friend instanceof undefined){
-                res.sendStatus(404);
-            }
-            else{
-                user.friends.push(friend);
-                res.sendStatus(302);
-            }        
+            // waiting for controller
         })
         .delete(async (req: Request, res: Response) => {
-            let userList: User[] = await controller.all(req, res, () => {});
-
-            let user: User = userList.find(u => u.id === req.params.userId);
-            let friend: User = userList.find(u => u.id === req.params.friendId);
-
-            if(user instanceof undefined || friend instanceof undefined){
-                res.sendStatus(404);
-            }
-            else{
-                let index: number = user.friends.indexOf(friend);
-                
-                if(index > -1){
-                    user.friends.splice(index, 1);
-                }
-                
-                res.sendStatus(302);
-            }     
+            // waiting for controller
     });
 
     // start express server

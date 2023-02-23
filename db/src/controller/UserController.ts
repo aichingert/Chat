@@ -5,13 +5,11 @@ import { User } from "../entity/User"
 export class UserController {
     private userRepository = AppDataSource.getRepository(User)
 
-    async all(request: Request, response: Response, next: NextFunction) {
+    async all(): Promise<User[]> {
         return this.userRepository.find()
     }
 
-    async one(request: Request, response: Response, next: NextFunction) {
-        const id = parseInt(request.params.id)
-
+    async one(id: number): Promise<User | string> {
         const user = await this.userRepository.findOne({
             where: { id }
         })
@@ -26,21 +24,11 @@ export class UserController {
         return await this.userRepository.save(this.userRepository.create(input));
     }
 
-    async save(request: Request, response: Response, next: NextFunction) {
-        const { firstName, lastName, age } = request.body;
-
-        const user = Object.assign(new User(), {
-            firstName,
-            lastName,
-            age
-        })
-
+    async save(user: User) {
         return this.userRepository.save(user)
     }
 
-    async remove(request: Request, response: Response, next: NextFunction) {
-        const id = parseInt(request.params.id)
-
+    async remove(id: number): Promise<string> {
         let userToRemove = await this.userRepository.findOneBy({ id })
 
         if (!userToRemove) {
@@ -51,4 +39,6 @@ export class UserController {
 
         return "user has been removed"
     }
+
+    //to be added friendList 
 }
