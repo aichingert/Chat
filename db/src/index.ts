@@ -1,7 +1,7 @@
 import * as express from "express"
 import * as bodyParser from "body-parser"
 import { Request, Response } from "express"
-import { AppDataSource } from "./data-source"
+import { port, AppDataSource } from "./data-source"
 import { Routes } from "./routes"
 import { User } from "./entity/User"
 import { UserController,  } from "./controller/UserController"
@@ -12,10 +12,8 @@ const userController: UserController = new UserController;
 const friendListController: FriendListController = new FriendListController;
 
 AppDataSource.initialize().then(async () => {
-
     // create express app
     const app: express = express();
-    const portNumber: number = 3000;
 
     app.use(bodyParser.json());
 
@@ -84,8 +82,8 @@ AppDataSource.initialize().then(async () => {
     await friendListController.save(friendList)
 
     // start express server
-    app.listen(portNumber);
+    app.listen(port);
 
-    console.log(`Express server has started on port ${portNumber}.`)
+    console.log(`Express server has started on port ${port}.`)
 
 }).catch(error => console.log(error))
