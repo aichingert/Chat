@@ -1,11 +1,10 @@
-import { Entity, Column } from "typeorm"
+import {Entity, Column, PrimaryColumn} from "typeorm"
 
 @Entity()
 export class FriendList {
-
-    @Column()
+    @PrimaryColumn()
     idOne: number
 
-    @Column()
+    @PrimaryColumn()
     idTwo: number
 }

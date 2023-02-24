@@ -20,10 +20,6 @@ export class UserController {
         return user
     }
 
-    async create(input: Partial<User>) {
-        return await this.userRepository.save(this.userRepository.create(input));
-    }
-
     async save(user: User) {
         return this.userRepository.save(user)
     }

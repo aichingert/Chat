@@ -4,15 +4,19 @@ import { Request, Response } from "express"
 import { AppDataSource } from "./data-source"
 import { Routes } from "./routes"
 import { User } from "./entity/User"
-import { UserController } from "./controller/UserController"
+import { UserController,  } from "./controller/UserController"
+import {FriendListController} from "./controller/FriendListController";
+import {FriendList} from "./entity/FriendList";
+
+const userController: UserController = new UserController;
+const friendListController: FriendListController = new FriendListController;
 
 AppDataSource.initialize().then(async () => {
 
     // create express app
     const app: express = express();
     const portNumber: number = 3000;
-    let controller: UserController = new UserController;
-    
+
     app.use(bodyParser.json());
 
     // register express routes from defined application routes
@@ -34,7 +38,7 @@ AppDataSource.initialize().then(async () => {
     app.post('/login', async (req: Request, res: Response) => {
         let user: User = req.json();
 
-        let userList: User[] = await controller.all();
+        let userList: User[] = await userController.all();
 
         if(userList.find(u => u === user)){
             // gefunden
@@ -49,11 +53,11 @@ AppDataSource.initialize().then(async () => {
     app.post('/register', async (req: Request, res: Response) => {
         let user: User = JSON.parse(req.body);
 
-        await controller.save(user);
+        await userController.save(user);
     });
     
     app.get('/friends/:userId', async (req: Request, res: Response) => {
-        let user: User | string = await controller.one(req.params.userId);
+        let user: User | string = await userController.one(req.params.userId);
         
         if(user instanceof User){
             // waiting for controller            
@@ -73,28 +77,15 @@ AppDataSource.initialize().then(async () => {
             // waiting for controller
     });
 
+    const friendList: FriendList = new FriendList();
+    friendList.idOne = 1;
+    friendList.idTwo = 2;
+
+    await friendListController.save(friendList)
+
     // start express server
-    app.listen(portNumber)
+    app.listen(portNumber);
 
-    // insert new users for test
-    /*
-    await AppDataSource.manager.save(
-        AppDataSource.manager.create(User, {
-            firstName: "Timber",
-            lastName: "Saw",
-            age: 27
-        })
-    )
-
-    await AppDataSource.manager.save(
-        AppDataSource.manager.create(User, {
-            firstName: "Phantom",
-            lastName: "Assassin",
-            age: 24
-        })
-    )
-
-    console.log("Express server has started on port 3000. Open http://localhost:3000/users to see results")
-    */
+    console.log(`Express server has started on port ${portNumber}.`)
 
 }).catch(error => console.log(error))

@@ -7,15 +7,15 @@ export class User {
     @PrimaryGeneratedColumn()
     id: number
 
-    @Column()
+    @Column({type: "varchar", nullable: false})
     firstName: string
 
-    @Column()
+    @Column({type: "varchar", nullable: false})
     lastName: string
 
-    @Column()
+    @Column({type: "integer", nullable: false})
     age: number
 
-    @Column()
+    @Column({type: "varchar", nullable: false})
     password: string
 }
