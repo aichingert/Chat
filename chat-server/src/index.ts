@@ -1,4 +1,5 @@
 import ws from "ws";
+import {IncomingMessage} from "http"
 import {Chat, ExpressSocket, Message, WebSocketWrapper} from "./WebSocketWrappers";
 
 const wss = new ws.Server({ port: 42069 });
@@ -12,8 +13,12 @@ export function getUser(id: number) {
 }
 
 
-wss.on("connection", ws => {
-    const urlParams = new URLSearchParams(ws.url.trim());
+wss.on("connection", (ws: ws.WebSocket, request: IncomingMessage) => {
+    if (!request) {
+        return;
+    }
+
+    const urlParams = new URLSearchParams(request.url!.trim());
     let wsw: WebSocketWrapper;
     if (bot === null && urlParams.has("type") && urlParams.has("key")) {
         if (urlParams.get("type") === 'bot' && urlParams.get("key") === process.env.EXPRESS_SERVER_TOKEN) {
