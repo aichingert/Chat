@@ -15,7 +15,7 @@ export const actions : Actions = {
             let raw = await fetch("http://127.0.0.1:3000/register", {
                 method: "POST",
                 body: JSON.stringify({
-                    username: username,
+                    name: username,
                     password: password
                 })
             });
