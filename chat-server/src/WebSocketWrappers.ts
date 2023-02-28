@@ -28,6 +28,9 @@ export class WebSocketWrapper {
     }
 }
 
-export class Message {
-    constructor(public readonly senderId: number, public readonly chatId: number, public readonly message: string, public readonly time: Date) {}
+export interface Message {
+    senderId: number,
+    chatId: number,
+    message: string,
+    time: Date
 }
