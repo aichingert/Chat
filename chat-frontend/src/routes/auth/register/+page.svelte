@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
-
 </script>
 
 <div class="w-screen h-screen flex justify-center items-center">

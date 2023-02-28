@@ -19,14 +19,6 @@ export const actions : Actions = {
                     password: password
                 })
             });
-            if(!raw.ok) return;
-            let response = await raw.json();
-            event.cookies.set("id", response.id, {
-                maxAge: 60*60*24,
-                secure: true,
-                path:"/",
-            });
-            throw redirect(raw.status, "/");
         }
         catch{
 
