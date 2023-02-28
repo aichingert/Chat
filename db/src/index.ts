@@ -2,20 +2,16 @@ import express from "express"
 import bodyParser from "body-parser"
 import { Request, Response } from "express"
 import { port, AppDataSource } from "./data-source"
-import { Routes } from "./routes"
 import { User } from "./entity/User"
+import { Chat } from "./entity/Chat"
 import { UserController} from "./controller/UserController"
-import {FriendListController} from "./controller/FriendListController"
-import {FriendList} from "./entity/FriendList"
+import { ChatController } from "./controller/ChatController";
 import ws from "ws";
 import cors from "cors";
 
-const userController: UserController = new UserController;
-const friendListController: FriendListController = new FriendListController;
-
+const userController: UserController = new UserController();
+const chatController: ChatController = new ChatController();
 const websocket: ws.WebSocket = new ws.WebSocket('ws://127.0.0.1:42069/?type=bot&key=' + process.env.EXPRESS_SERVER_TOKEN);
-
-
 
 AppDataSource.initialize().then(async () => {
     // create express app
@@ -24,21 +20,7 @@ AppDataSource.initialize().then(async () => {
     app.use(bodyParser.json());
     app.use(cors());
 
-// register express routes from defined application routes
-    Routes.forEach(route => {
-        (app as any)[route.method](route.route, (req: Request, res: Response, next: Function) => {
-            const result = (new (route.controller as any))[route.action](req, res, next)
-            if (result instanceof Promise) {
-                result.then(result => result !== null && result !== undefined ? res.send(result) : undefined)
-
-            } else if (result !== null && result !== undefined) {
-                res.json(result)
-            }
-        })
-    })
-
-// setup express app here
-// ...
+    // Express entry points
 
     app.post('/login', async (req: Request, res: Response) => {
         let user: User = req.body.json();
@@ -85,37 +67,38 @@ AppDataSource.initialize().then(async () => {
         }
     });
 
-    app.get('/friends/:userId', async (req: Request, res: Response) => {
-        let user: User | string = await userController.one(Number.parseInt(req.params.userId));
-
-        if(user instanceof User){
-            // waiting for controller
-
-            res.sendStatus(302);
-        }
-        else{
-            res.sendStatus(404);
-        }
-    });
-
-    app.put('/friends/:userId/:friendId', async (req: Request, res: Response) => {
-        // waiting for controller
-
-    });
-
-    app.delete('/friends/:userId/:friendId', async (req: Request, res: Response) => {
-        // waiting for controller
-
-    });
-
-    const friendList: FriendList = new FriendList();
-    friendList.idOne = 1;
-    friendList.idTwo = 2;
-
-    await friendListController.save(friendList)
-
-// start express server
+    // Starting express server
     app.listen(port);
+
+    const user1 = new User();
+    user1.name = "u1";
+    user1.password = "tt";
+
+    const user2 = new User();
+    user2.name = "u2";
+    user2.password = "ww";
+
+    const user3 = new User();
+    user3.name = "u3";
+    user3.password = "u3";
+
+    const chat = new Chat();
+    chat.user1 = user1;
+    chat.user2 = user2;
+
+    const chat2 = new Chat();
+    chat2.user1 = user1;
+    chat2.user2 = user3;
+
+    await userController.save(user1);
+    await userController.save(user2);
+    await userController.save(user3);
+
+    chatController.save(chat).then((saved) => console.log(saved));
+    chatController.save(chat2).then((saved) => console.log(saved));
+
+    const chat_id = await chatController.one(2);
+    console.log(chat_id);
 
     console.log(`Express server has started on port ${port}.`)
 }).catch(error => console.log(error))
