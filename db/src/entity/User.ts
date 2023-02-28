@@ -8,13 +8,7 @@ export class User {
     id: number
 
     @Column({type: "varchar", nullable: false})
-    firstName: string
-
-    @Column({type: "varchar", nullable: false})
-    lastName: string
-
-    @Column({type: "integer", nullable: false})
-    age: number
+    name: string
 
     @Column({type: "varchar", nullable: false})
     password: string
