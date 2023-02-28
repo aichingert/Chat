@@ -1,15 +1,20 @@
 <script lang="ts">
 	import { onMount } from "svelte";
+	import type { PageData } from "./$types";
+
+    export let data : PageData;
 
     let messages = [];
     let socket;
     $: connection = true;
     onMount(() => {
-        socket = new WebSocket(`https://127.0.0.1:42069?client&id=${sessionStorage.getItem("id")}`);
+        //socket = new WebSocket(`https://127.0.0.1:42069?client&id=${sessionStorage.getItem("id")}`);
         connection = window.navigator.onLine;
         window.addEventListener("online", () => connection = true);
         window.addEventListener("offline", () => connection = false);
     });
+
+    console.log(data)
 </script>
 
 <div class="grid grid-cols-6 h-screen">
