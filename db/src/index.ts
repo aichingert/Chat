@@ -59,7 +59,7 @@ AppDataSource.initialize().then(async () => {
 
         let userList: User[] = await userController.all();
 
-        if(userList.find(u => u.name = user.name)){
+        if(userList.find(u => u.name === user.name)){
             res.sendStatus(409);
         } else {
             await userController.save(user);
