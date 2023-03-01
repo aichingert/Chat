@@ -67,9 +67,22 @@ AppDataSource.initialize().then(async () => {
         }
     });
 
+    app.get('/see/users', async (req: Request, res: Response) => {
+        let users: User[] = await userController.all();
+
+        res.send(users);
+    });
+
+    app.get('/see/chats', async (req: Request, res: Response) => {
+        let chats: Chat[] = await chatController.all();
+        console.log(chats);
+        res.send(chats);
+    });
+
     // Starting express server
     app.listen(port);
 
+    /*
     const user1 = new User();
     user1.name = "u1";
     user1.password = "tt";
@@ -96,6 +109,7 @@ AppDataSource.initialize().then(async () => {
 
     chatController.save(chat).then((saved) => console.log(saved));
     chatController.save(chat2).then((saved) => console.log(saved));
+     */
 
     const chat_id = await chatController.one(2);
     console.log(chat_id);
