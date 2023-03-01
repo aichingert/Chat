@@ -1,10 +1,13 @@
 <script lang="ts">
+    import type { Chat } from "$lib/types";
 	import { onMount } from "svelte";
 	import type { PageData } from "./$types";
 
     export let data : PageData;
+    let chats = data.chats;
 
-    let messages = [];
+    let currentChat : Chat;
+    $: currentChat;
     let socket;
     $: connection = true;
     onMount(() => {
@@ -12,15 +15,14 @@
         connection = window.navigator.onLine;
         window.addEventListener("online", () => connection = true);
         window.addEventListener("offline", () => connection = false);
+        console.log(data)
     });
-
-    console.log(data)
 </script>
 
 <div class="grid grid-cols-6 h-screen">
-    <div class="col-span-2 border-r-4 border-onedark-darkblue h-screen">
-        <div class="">
-            <div class="py-2 flex items-center bg-onedark-gray px-2 space-x-2">
+    <div class="col-span-1 border-r-4 border-onedark-darkblue h-screen">
+        <div class="h-screen overflow-hidden">
+            <div class="h-10 flex items-center bg-onedark-gray px-2 space-x-2">
                 <div class="rounded-full h-5 w-5 {connection ? "bg-onedark-green" : "bg-onedark-red"}"/>
                 <p class="md:text-lg text-xs">
                     Luka Civic
@@ -34,12 +36,48 @@
                     <input name="search" placeholder="search chats" class="placeholder-onedark-lightgray outline-none bg-inherit w-11/12">
                 </form>
             </div>
-            <div>
-
+            <div class="overflow-auto h-full">
+                {#each chats as chat, i}
+                    <div class="h-10 w-full">
+                        <button class="text-center text-xl w-full" on:click={(e) => {
+                                currentChat = chats[i];
+                                console.log(currentChat)
+                                console.log(currentChat.messages)
+                            }}>{chat.recipient.name}</button>
+                    </div>
+                {/each}
             </div>
         </div>  
     </div>
-    <div class="col-span-4 h-screen">
-
+    {#if currentChat}
+    <div class="col-span-5 h-screen">
+        <div class="flex justify-center items-center h-16 border-b-8 px-2 border-onedark-darkblue bg-onedark-darkblue">
+            <div class="flex items-center justify-centery w-full px-2 bg-onedark-gray rounded-md">
+                <p class="text-center w-full text-2xl">{currentChat.recipient.name}</p>
+            </div>
+        </div>
+        <div class="h-[calc(100vh-8rem)] overflow-auto bg-onedark-darkblue">
+            <div class="p-4 m-2 border-2 rounded-2xl border-onedark-darkblue bg-onedark-gray">
+                {#each currentChat.messages as message, i}
+                <div class="w-full">
+                    <p class="text-{i%2==0 ? "left" : "right"} text-xl">{message.sender.name}</p>
+                    <pre class="text-{i%2==0 ? "left" : "right"}">{message.text}</pre>
+                </div>
+                {/each}
+            </div>
+        </div>
+        <div class="h-16 bg-onedark-darkblue flex justify-centers items-center px-2">
+            <form class="flex items-center w-full px-2 bg-onedark-gray rounded-md">
+                <input placeholder="message to {currentChat.recipient.name}" class="outline-none h-10 w-11/12 bg-inherit px-2">
+                <button class="w-1/12 flex justify-center">
+                    <svg class="fill-onedark-white" height="40" viewBox="0 96 960 960" width="40"><path d="M120 896V256l760 320-760 320Zm66.666-101.999L707.334 576 186.666 355.999v158.668L428 576l-241.334 60v158.001Zm0 0V355.999 794.001Z"/></svg>
+                </button>
+            </form>
+        </div>
     </div>
+    {:else}
+    <div class="col-span-5 h-screen flex justify-center items-center">
+        <p>No chat selected</p>
+    </div>
+    {/if}
 </div>
