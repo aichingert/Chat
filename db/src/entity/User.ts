@@ -1,9 +1,8 @@
-import { Hash } from "crypto"
-import { Entity, PrimaryGeneratedColumn, Column } from "typeorm"
+import {Entity, PrimaryGeneratedColumn, Column, JoinColumn, OneToMany} from "typeorm"
+import {Message} from "./Message";
 
 @Entity()
 export class User {
-
     @PrimaryGeneratedColumn()
     id: number
 

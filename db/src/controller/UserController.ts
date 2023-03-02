@@ -20,6 +20,18 @@ export class UserController {
         return user
     }
 
+    async one_by_name(name: string): Promise<User | string> {
+        const user = await this.userRepository.findOne({
+            where: { name }
+        })
+
+        if (!user) {
+            return "unregistered user"
+        }
+
+        return user
+    }
+
     async save(user: User) {
         return this.userRepository.save(user)
     }
@@ -35,6 +47,4 @@ export class UserController {
 
         return "user has been removed"
     }
-
-    //to be added friendList 
 }

@@ -8,9 +8,12 @@ import { UserController} from "./controller/UserController"
 import { ChatController } from "./controller/ChatController";
 import ws from "ws";
 import cors from "cors";
+import {Message} from "./entity/Message";
+import {MessageController} from "./controller/MessageController";
 
 const userController: UserController = new UserController();
 const chatController: ChatController = new ChatController();
+const messageController: MessageController = new MessageController();
 const websocket: ws.WebSocket = new ws.WebSocket('ws://127.0.0.1:42069/?type=bot&key=' + process.env.EXPRESS_SERVER_TOKEN);
 
 AppDataSource.initialize().then(async () => {
@@ -79,6 +82,12 @@ AppDataSource.initialize().then(async () => {
         res.send(chats);
     });
 
+    app.get('/see/messages', async (req: Request, res: Response) => {
+        let messages: Message[] = await messageController.all();
+        console.log(messages);
+        res.send(messages);
+    });
+
     // Starting express server
     app.listen(port);
 
@@ -109,10 +118,26 @@ AppDataSource.initialize().then(async () => {
 
     chatController.save(chat).then((saved) => console.log(saved));
     chatController.save(chat2).then((saved) => console.log(saved));
-     */
+    */
+    const gotten_chat = await chatController.one(2);
+    const mes = new Message();
+    mes.content = "Hallo";
+    mes.written = Date.now();
+    //console.log(gotten_chat);
+    if (typeof gotten_chat !== "string") {
+        mes.chat = gotten_chat;
+        await messageController.save(mes);
+    }
 
-    const chat_id = await chatController.one(2);
-    console.log(chat_id);
+    const user_chats = await chatController.user_chats("u2");
+    console.log(user_chats);
+    /*
+    for (let i = 0; i < 20; i++) {
+        await messageController.remove(i);
+        await chatController.remove(i);
+        await userController.remove(i);
+    }
+     */
 
     console.log(`Express server has started on port ${port}.`)
 }).catch(error => console.log(error))
