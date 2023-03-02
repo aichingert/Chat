@@ -1,54 +1,50 @@
 import { AppDataSource } from '../data-source';
 import { Chat } from "../entity/Chat";
-import { UserController } from "./UserController";
 
 export class ChatController {
-    private chatRepository = AppDataSource.getRepository(Chat)
-    private userController = new UserController();
+    private chatRepository = AppDataSource.getRepository(Chat);
 
     async all(): Promise<Chat[]> {
-        return this.chatRepository.find()
+        return this.chatRepository.find();
     }
 
     async one(id: number): Promise<Chat | string> {
-        const chat = await this.chatRepository.findOne({
-            where: { id }
-        })
+        const chat = await this.chatRepository.findOneBy({ id });
 
         if (!chat) {
-            return "no chat"
+            return "no chat";
         }
-        return chat
+
+        return chat;
     }
 
-    async user_chats(name: string): Promise<Chat[]> {
-        let user = await this.userController.one_by_name(name);
+    async get_user_chats(id: number): Promise<Chat[] | string> {
+        const chats = await this.chatRepository
+            .createQueryBuilder("chat")
+            .where("chat.user1_id = :u1_id", { u1_id: id })
+            .orWhere("chat.user2_id = :u2_id", { u2_id: id })
+            .getMany();
 
-        if (typeof user === "string") {
-            return [];
+        if (!chats) {
+            return "Return no chats!";
         }
 
-        const user1_id = user.id;
-        const user2_id = user.id;
-        let query_one = await this.chatRepository.findBy( { user1_id });
-        let query_two = await this.chatRepository.findBy( { user2_id });
-
-        return query_one.concat(query_two);
+        return chats;
     }
 
     async save(chat: Chat) {
-        return this.chatRepository.save(chat)
+        return this.chatRepository.save(chat);
     }
 
     async remove(id: number): Promise<string> {
-        let chatToRemove = await this.chatRepository.findOneBy({ id })
+        let chatToRemove = await this.chatRepository.findOneBy({ id });
 
         if (!chatToRemove) {
-            return "Chat does not exist"
+            return "Chat does not exist";
         }
 
-        await this.chatRepository.remove(chatToRemove)
+        await this.chatRepository.remove(chatToRemove);
 
-        return "Chat has been removed"
+        return "Chat has been removed";
     }
 }

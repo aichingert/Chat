@@ -115,10 +115,11 @@ AppDataSource.initialize().then(async () => {
     await userController.save(user1);
     await userController.save(user2);
     await userController.save(user3);
-
     chatController.save(chat).then((saved) => console.log(saved));
     chatController.save(chat2).then((saved) => console.log(saved));
     */
+
+    /*
     const gotten_chat = await chatController.one(2);
     const mes = new Message();
     mes.content = "Hallo";
@@ -128,8 +129,9 @@ AppDataSource.initialize().then(async () => {
         mes.chat = gotten_chat;
         await messageController.save(mes);
     }
+     */
 
-    const user_chats = await chatController.user_chats("u2");
+    const user_chats = await chatController.get_user_chats(1);
     console.log(user_chats);
     /*
     for (let i = 0; i < 20; i++) {
