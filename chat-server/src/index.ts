@@ -51,7 +51,7 @@ wss.on("connection", (ws: ws.WebSocket, request: IncomingMessage) => {
             let chat: Chat | undefined = loadedChats.find(chat => chat.chatId === message.chat_id);
 
             if (!chat) {
-                let res: AxiosResponse<Chat, any> = await axios.get(`127.0.0.1:3000/see/chats/${message.chat_id}`)
+                let res: AxiosResponse<Chat, any> = await axios.get(`127.0.0.1:3000/chats/${message.chat_id}`)
                 chat = res.data;
             }
 
