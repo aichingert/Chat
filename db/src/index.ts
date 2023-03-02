@@ -39,7 +39,7 @@ AppDataSource.initialize().then(async () => {
         websocket.send("approve " + db_user.id);
 
         // 302 => Found
-        res.sendStatus(302);
+        res.sendStatus(302).send(db_user.id);
     });
 
     app.post("/logout", async (req: Request, res: Response): Promise<void> => {
@@ -74,11 +74,13 @@ AppDataSource.initialize().then(async () => {
             return;
         }
 
-        await userController.save(user);
-        res.sendStatus(201);
+        const id: number = (await userController.save(user)).id;
+
+        websocket.send(id);
+        res.sendStatus(201).send(id);
     });
 
-    app.get("/user/chats", async (req: Request, res: Response): Promise<Chat[] | void> => {
+    app.get("/user/chats", async (req: Request, res: Response): Promise<void> => {
         const user: User = req.body;
 
         const db_user: User | string = await userController.get_one_by_name(user.name);
@@ -97,7 +99,20 @@ AppDataSource.initialize().then(async () => {
             return;
         }
 
-        return chats;
+        res.send(JSON.stringify(chats));
+    });
+
+    app.get("/chats/:chatId", async (req: Request, res: Response): Promise<void> => {
+        const chat: Chat | string = await chatController.one(Number.parseInt(req.params.chatId));
+
+        if(typeof chat === "string"){
+            // 404 Not found
+            res.sendStatus(404);
+            return;
+        }
+
+        // 302 => Found
+        res.sendStatus(302).send(chat);
     });
 
     app.get("/see/users", async (req: Request, res: Response) => {
@@ -119,7 +134,7 @@ AppDataSource.initialize().then(async () => {
     // Test users, chats and messages => for testing
     // await loadTestData();
 
-    console.log(`Express server has started on port ${port}.`)
+    console.log(`Express server has started on port ${port}.`);
 }).catch(error => console.log(error))
 
 async function loadTestData() {
