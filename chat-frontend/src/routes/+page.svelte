@@ -71,7 +71,7 @@
     </div>
     {:else}
     <div class="col-span-5 h-screen flex justify-center items-center">
-        <p>No chat selected</p>
+        <img class="h-2/5" src="/notWhatsapp.png" alt=":nerd:">
     </div>
     {/if}
 </div>
