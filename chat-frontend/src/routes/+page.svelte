@@ -39,7 +39,7 @@
             <div class="h-[calc(100vh-5rem)] overflow-auto">
                 {#each chats as chat, i}
                     <div class="h-10 w-full">
-                        <button class="text-center text-xl w-full" on:click={(e) => {
+                        <button class="text-center text-xl w-full hover:bg-onedark-darkblue" on:click={(e) => {
                                 currentChat = chats[i];
                                 console.log(currentChat)
                                 console.log(currentChat.messages)

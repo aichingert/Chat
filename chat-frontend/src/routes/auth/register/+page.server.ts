@@ -11,21 +11,25 @@ export const actions : Actions = {
         console.log(username);
         console.log(password);
 
-        try{
-            let raw = await fetch("http://127.0.0.1:3000/register", {
-                method: "POST",
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    name: username,
-                    password: password
-                })
-            });
-        }
-        catch{
+        let raw = await fetch("http://127.0.0.1:3000/register", {
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                name: username,
+                password: password
+            })
+        });
 
-        }
+        if(raw.status != 201) return;
+        let response = await raw.json();
+        event.cookies.set("id", response, {
+            maxAge: 60*60*24,
+            secure: true,
+            path:"/",
+        });
+        throw redirect(raw.status, "/");
     }
 };
 

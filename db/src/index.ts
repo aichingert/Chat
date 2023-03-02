@@ -39,7 +39,7 @@ AppDataSource.initialize().then(async () => {
         websocket.send("approve " + db_user.id);
 
         // 302 => Found
-        res.sendStatus(302).send(db_user.id);
+        res.status(302).send(JSON.stringify(db_user.id));
     });
 
     app.post("/logout", async (req: Request, res: Response): Promise<void> => {
