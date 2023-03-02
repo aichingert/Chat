@@ -8,11 +8,11 @@ export class Chat {
     constructor(public webSocketIds: number[], public readonly chatId: number) {}
 
     sendMessage(msg: Message) {
-        this.webSocketIds.filter(webSocket => webSocket !== msg.senderId).forEach(wsId => {
-            let user = getUser(wsId);
+        this.webSocketIds.filter((webSocket: number) => webSocket !== msg.user_id).forEach((wsId: number) => {
+            let users: WebSocketWrapper[] = getUser(wsId);
 
-            if (user) {
-                user.send(JSON.stringify(msg));
+            if (users.length != 0) {
+                users.forEach((user: WebSocketWrapper) => user.send(JSON.stringify(msg)));
             } else {
                 //TODO: Notify DB
             }
@@ -29,8 +29,9 @@ export class WebSocketWrapper {
 }
 
 export interface Message {
-    senderId: number,
-    chatId: number,
-    message: string,
-    time: Date
+    id: number,
+    user_id: number,
+    chat_id: number,
+    content: string,
+    written_at: number
 }

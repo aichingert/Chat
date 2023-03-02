@@ -1,6 +1,7 @@
 import ws from "ws";
 import {IncomingMessage} from "http"
 import {Chat, ExpressSocket, Message, WebSocketWrapper} from "./WebSocketWrappers";
+import axios, {AxiosResponse} from "axios";
 
 const wss = new ws.Server({ port: 42069 });
 let bot: ExpressSocket | null = null;
@@ -8,8 +9,8 @@ let approvedIds: number[] = [];
 let webSocketWrappers: WebSocketWrapper[] = [];
 let loadedChats: Chat[];
 
-export function getUser(id: number) {
-    return webSocketWrappers.find(ws => ws.id === id);
+export function getUser(id: number): WebSocketWrapper[] {
+    return webSocketWrappers.filter((ws: WebSocketWrapper) => ws.id === id);
 }
 
 
@@ -18,7 +19,7 @@ wss.on("connection", (ws: ws.WebSocket, request: IncomingMessage) => {
         return;
     }
 
-    const urlParams = new URLSearchParams(request.url!.trim());
+    const urlParams: URLSearchParams = new URLSearchParams(request.url!.trim());
     let wsw: WebSocketWrapper;
     if (bot === null && urlParams.has("type") && urlParams.has("key")) {
         if (urlParams.get("type") === 'bot' && urlParams.get("key") === process.env.EXPRESS_SERVER_TOKEN) {
@@ -32,10 +33,10 @@ wss.on("connection", (ws: ws.WebSocket, request: IncomingMessage) => {
         webSocketWrappers.push(wsw);
     }
 
-    ws.on("message", msg => {
+    ws.on("message", async (msg: ws.RawData) => {
         if (bot?.ws === ws) {
             let args: string[] = `${msg}`.split(' ');
-            let command = args.shift();
+            let command: string = args.shift()!;
 
             switch (command?.toLocaleLowerCase()) {
                 case "approve":
@@ -47,11 +48,11 @@ wss.on("connection", (ws: ws.WebSocket, request: IncomingMessage) => {
             }
         } else {
             let message: Message = JSON.parse(`${msg}`);
-            let chat = loadedChats.find(chat => chat.chatId === message.chatId);
+            let chat: Chat | undefined = loadedChats.find(chat => chat.chatId === message.chat_id);
 
             if (!chat) {
-                //TODO: Load chat from DB
-                chat = new Chat([], 1);
+                let res: AxiosResponse<Chat, any> = await axios.get(`127.0.0.1:3000/see/chats/${message.chat_id}`)
+                chat = res.data;
             }
 
             chat.sendMessage(message);
@@ -65,7 +66,7 @@ wss.on("connection", (ws: ws.WebSocket, request: IncomingMessage) => {
         }
 
         if (wsw) {
-            webSocketWrappers = webSocketWrappers.filter(ws => ws !== wsw);
+            webSocketWrappers = webSocketWrappers.filter((ws: WebSocketWrapper) => ws !== wsw);
         }
     }));
 });
