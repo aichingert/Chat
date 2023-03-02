@@ -1,20 +1,21 @@
 import { AppDataSource } from '../data-source'
 import { Message } from "../entity/Message"
+import {Repository} from "typeorm";
 
 export class MessageController {
-    private messageRepository = AppDataSource.getRepository(Message);
+    private messageRepository: Repository<Message> = AppDataSource.getRepository(Message);
 
     async all(): Promise<Message[]> {
         return this.messageRepository.find();
     }
 
     async one(id: number): Promise<Message | string> {
-        const chat: Message = await this.messageRepository.findOneBy( { id });
+        const message: Message = await this.messageRepository.findOneBy( { id });
 
-        if (!chat) {
-            return "no chat";
+        if (!message) {
+            return "no message";
         }
-        return chat;
+        return message;
     }
 
     async get_messages_from(chat_id: number): Promise<Message[] | string> {
@@ -30,7 +31,7 @@ export class MessageController {
         return messages;
     }
 
-    async save(message: Message) {
+    async save(message: Message): Promise<Message> {
         return this.messageRepository.save(message);
     }
 
@@ -43,5 +44,13 @@ export class MessageController {
 
         await this.messageRepository.remove(messageToRemove);
         return "Message has been removed";
+    }
+
+    async remove_all(): Promise<void> {
+        const all: Message[] = await this.messageRepository.find();
+
+        for (const message of all) {
+            await this.remove(message.id);
+        }
     }
 }

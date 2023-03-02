@@ -1,7 +1,5 @@
-import { Hash } from "crypto"
-import {Entity, PrimaryGeneratedColumn, JoinColumn, ManyToOne, Column, OneToMany} from "typeorm"
+import {Entity, PrimaryGeneratedColumn, JoinColumn, ManyToOne, Column} from "typeorm"
 import {User} from "./User";
-import {Message} from "./Message";
 
 @Entity()
 export class Chat {

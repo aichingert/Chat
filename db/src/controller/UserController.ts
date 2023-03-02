@@ -1,17 +1,16 @@
 import { AppDataSource } from '../data-source';
-import { NextFunction, Request, Response } from "express";
 import { User } from "../entity/User"
-import { QueryBuilder } from "typeorm";
+import {Repository} from "typeorm";
 
 export class UserController {
-    private userRepository = AppDataSource.getRepository(User);
+    private userRepository: Repository<User> = AppDataSource.getRepository(User);
 
     async all(): Promise<User[]> {
         return this.userRepository.find();
     }
 
     async one(id: number): Promise<User | string> {
-        const user = await this.userRepository.findOneBy({ id });
+        const user: User = await this.userRepository.findOneBy({ id });
 
         if (!user) {
             return "unregistered user";
@@ -21,7 +20,7 @@ export class UserController {
     }
 
     async get_one_by_name(name: string): Promise<User | string> {
-        const user = this.userRepository
+        const user: User = await this.userRepository
             .createQueryBuilder("user")
             .where("user.name = :name", { name: name })
             .getOne();
@@ -33,12 +32,12 @@ export class UserController {
         return user;
     }
 
-    async save(user: User) {
+    async save(user: User): Promise<User> {
         return this.userRepository.save(user);
     }
 
     async remove(id: number): Promise<string> {
-        const userToRemove = await this.userRepository.findOneBy({ id });
+        const userToRemove: User | string = await this.userRepository.findOneBy({ id });
 
         if (typeof userToRemove === "string") {
             return "User does not exist";
@@ -46,5 +45,13 @@ export class UserController {
 
         await this.userRepository.remove(userToRemove);
         return "user has been removed";
+    }
+
+    async remove_all(): Promise<void> {
+        const all: User[] = await this.userRepository.find();
+
+        for (const user of all) {
+            await this.remove(user.id);
+        }
     }
 }
