@@ -10,8 +10,6 @@ export const actions : Actions = {
         let username = data.get("username") as string;
         let password = await digestMessage(data.get("password") as string);
         
-        console.log(username);
-        console.log(password);
         let raw = await fetch("http://127.0.0.1:3000/login", {
             method: "POST",
             headers: {
@@ -23,7 +21,7 @@ export const actions : Actions = {
             })
         });
         if(raw.status != 302) return;   
-        let response = await raw.json();
+        let response = await raw.text();
         event.cookies.set("id", response, {
             maxAge: 60*60*24,
             secure: true,

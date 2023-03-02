@@ -7,9 +7,6 @@ export const actions : Actions = {
         let data = await event.request.formData();
         let username = data.get("username") as string;
         let password = await digestMessage(data.get("password") as string);
-    
-        console.log(username);
-        console.log(password);
 
         let raw = await fetch("http://127.0.0.1:3000/register", {
             method: "POST",
@@ -23,13 +20,13 @@ export const actions : Actions = {
         });
 
         if(raw.status != 201) return;
-        let response = await raw.json();
+        let response = await raw.text();
         event.cookies.set("id", response, {
             maxAge: 60*60*24,
             secure: true,
             path:"/",
         });
-        throw redirect(raw.status, "/");
+        throw redirect(300, "/");
     }
 };
 
