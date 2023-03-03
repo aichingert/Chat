@@ -1,5 +1,6 @@
 import WS from "ws";
 import {getUser} from "./index";
+import axios, {AxiosResponse} from "axios";
 export class ExpressSocket {
     constructor(public readonly ws: WS.WebSocket) {}
 }
@@ -11,11 +12,11 @@ export class Chat {
         this.webSocketIds.filter((webSocket: number) => webSocket !== msg.user_id).forEach((wsId: number) => {
             let users: WebSocketWrapper[] = getUser(wsId);
 
-            if (users.length != 0) {
+            if (users.length !== 0) {
                 users.forEach((user: WebSocketWrapper) => user.send(JSON.stringify(msg)));
-            } else {
-                //TODO: Notify DB
             }
+
+            axios.put(`http://127.0.0.1:3000/chats/${msg.chat_id}/message`, msg).catch(e => console.error(e.message));
         });
     }
 }

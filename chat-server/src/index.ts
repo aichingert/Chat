@@ -1,6 +1,6 @@
 import ws from "ws";
 import {IncomingMessage} from "http"
-import {Chat, ExpressSocket, Message, WebSocketWrapper} from "./WebSocketWrappers";
+import {Chat, ExpressSocket, Message, WebSocketWrapper} from "./Models";
 import axios, {AxiosResponse} from "axios";
 
 const wss = new ws.Server({ port: 42069 });
@@ -12,7 +12,6 @@ let loadedChats: Chat[];
 export function getUser(id: number): WebSocketWrapper[] {
     return webSocketWrappers.filter((ws: WebSocketWrapper) => ws.id === id);
 }
-
 
 wss.on("connection", (ws: ws.WebSocket, request: IncomingMessage) => {
     if (!request) {
@@ -43,16 +42,23 @@ wss.on("connection", (ws: ws.WebSocket, request: IncomingMessage) => {
                     approvedIds.push(Number.parseInt(args.shift()!.trim()));
                 break;
                 case "disapprove":
-                    approvedIds = approvedIds.filter(id => id !== Number.parseInt(args.shift()!.trim()))
+                    approvedIds = approvedIds.filter((id: number) => id !== Number.parseInt(args.shift()!.trim()))
                 break;
             }
         } else {
             let message: Message = JSON.parse(`${msg}`);
-            let chat: Chat | undefined = loadedChats.find(chat => chat.chatId === message.chat_id);
+            let chat: Chat | undefined = loadedChats.find((chat: Chat) => chat.chatId === message.chat_id);
 
             if (!chat) {
-                let res: AxiosResponse<Chat, any> = await axios.get(`127.0.0.1:3000/chats/${message.chat_id}`)
-                chat = res.data;
+                let res: AxiosResponse<Chat, any>;
+
+                try {
+                    res = await axios.get(`http://127.0.0.1:3000/chats/${message.chat_id}`);
+                    chat = res.data;
+                } catch (e) {
+                    console.error(e);
+                    return;
+                }
             }
 
             chat.sendMessage(message);
