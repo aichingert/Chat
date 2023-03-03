@@ -4,13 +4,16 @@ import {User} from "./User";
 @Entity()
 export class Chat {
 
-    @PrimaryGeneratedColumn()
+    @PrimaryGeneratedColumn({type: "integer"})
     id: number;
 
-    @Column()
+    @Column({type: "integer", nullable: false})
+    new: number;
+
+    @Column({type: "integer", nullable: false})
     user1_id: number;
 
-    @Column()
+    @Column({type: "integer", nullable: false})
     user2_id: number;
 
 

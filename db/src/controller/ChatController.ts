@@ -19,6 +19,30 @@ export class ChatController {
         return chat;
     }
 
+    async reset_new_messages(id: number): Promise<string> {
+        let chat: Chat = await this.chatRepository.findOneBy({ id });
+
+        if (!chat) {
+            return "no chat";
+        }
+
+        chat.new = 0;
+        await this.chatRepository.update(chat.id, chat);
+        return "updated chat => removed messages";
+    }
+
+    async new_message(id: number): Promise<string> {
+        let chat: Chat = await this.chatRepository.findOneBy({ id });
+
+        if (!chat) {
+            return "no chat";
+        }
+
+        chat.new += 1;
+        await this.chatRepository.update(chat.id, chat);
+        return "updated chat => incremented new messages";
+    }
+
     async get_user_chats(id: number): Promise<Chat[] | string> {
         const chats: Chat[] = await this.chatRepository
             .createQueryBuilder("chat")

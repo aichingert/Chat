@@ -77,7 +77,7 @@ AppDataSource.initialize().then(async () => {
         const id: number = (await userController.save(user)).id;
 
         websocket.send(id);
-        res.sendStatus(201).send(id);
+        res.status(201).send(JSON.stringify(id));
     });
 
     app.get("/user/chats", async (req: Request, res: Response): Promise<void> => {
@@ -112,7 +112,7 @@ AppDataSource.initialize().then(async () => {
         }
 
         // 302 => Found
-        res.sendStatus(302).send(chat);
+        res.status(302).send(JSON.stringify(chat));
     });
 
     app.get("/see/users", async (req: Request, res: Response) => {
@@ -130,6 +130,24 @@ AppDataSource.initialize().then(async () => {
 
     // Starting express server
     app.listen(port);
+
+    /* For Luka to see how updating chats work.
+
+    const chat: Chat | string = await chatController.one(9);
+    if (typeof chat !== "string") {
+
+        for (let i = 0; i < 10; i++) {
+            // Adding new messages to chat => when message is sent
+            // 1. fetch chat => message.chat_id
+            // 2. update chat with chatController.new_message(chat.id);
+
+            console.log(`${await chatController.new_message(chat.id)}`);
+        }
+
+        // Route if Lukas sends us the fact that the other user has seen the messages
+        await chatController.reset_new_messages(chat.id);
+    }
+     */
 
     // Test users, chats and messages => for testing
     // await loadTestData();
@@ -155,10 +173,12 @@ async function loadTestData() {
     const chatBetweenMichaelAndHannah = new Chat();
     chatBetweenMichaelAndHannah.user1 = Michael;
     chatBetweenMichaelAndHannah.user2 = Hannah;
+    chatBetweenMichaelAndHannah.new = 1;
 
     const chatBetweenMichaelAndThomas = new Chat();
     chatBetweenMichaelAndThomas.user1 = Michael;
     chatBetweenMichaelAndThomas.user2 = Thomas;
+    chatBetweenMichaelAndThomas.new = 0;
 
     // creating messages
     const messageInChatMH = new Message();

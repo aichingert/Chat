@@ -4,7 +4,7 @@ import {User} from "./User";
 
 @Entity()
 export class Message {
-    @PrimaryGeneratedColumn()
+    @PrimaryGeneratedColumn({type: "integer"})
     id: number
 
     @Column({type: "varchar", nullable: false})
@@ -13,10 +13,10 @@ export class Message {
     @Column({type: "bigint", nullable: false})
     written_at: number;
 
-    @Column()
+    @Column( {type: "integer", nullable: false})
     chat_id: number;
 
-    @Column()
+    @Column( {type: "integer", nullable: false})
     user_id: number;
 
 
