@@ -19,7 +19,7 @@ export class ChatController {
         return chat;
     }
 
-    async reset_new_messages(id: number): Promise<string> {
+    async resetNewMessages(id: number): Promise<string> {
         let chat: Chat = await this.chatRepository.findOneBy({ id });
 
         if (!chat) {
@@ -31,7 +31,7 @@ export class ChatController {
         return "updated chat => removed messages";
     }
 
-    async new_message(id: number): Promise<string> {
+    async newMessage(id: number): Promise<string> {
         let chat: Chat = await this.chatRepository.findOneBy({ id });
 
         if (!chat) {
@@ -43,7 +43,7 @@ export class ChatController {
         return "updated chat => incremented new messages";
     }
 
-    async get_user_chats(id: number): Promise<Chat[] | string> {
+    async getUserChats(id: number): Promise<Chat[] | string> {
         const chats: Chat[] = await this.chatRepository
             .createQueryBuilder("chat")
             .where("chat.user1_id = :u1_id", { u1_id: id })
@@ -72,7 +72,7 @@ export class ChatController {
         return "Chat has been removed";
     }
 
-    async remove_all(): Promise<void> {
+    async removeAll(): Promise<void> {
         const all: Chat[] = await this.chatRepository.find();
 
         for (const chat of all) {

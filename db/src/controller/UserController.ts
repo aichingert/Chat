@@ -19,7 +19,7 @@ export class UserController {
         return user;
     }
 
-    async get_one_by_name(name: string): Promise<User | string> {
+    async getOneByName(name: string): Promise<User | string> {
         const user: User = await this.userRepository
             .createQueryBuilder("user")
             .where("user.name = :name", { name: name })
@@ -47,7 +47,7 @@ export class UserController {
         return "user has been removed";
     }
 
-    async remove_all(): Promise<void> {
+    async removeAll(): Promise<void> {
         const all: User[] = await this.userRepository.find();
 
         for (const user of all) {

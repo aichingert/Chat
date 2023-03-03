@@ -32,7 +32,10 @@ The db folder handles the database and express endpoints
 "/register", JSON(User)
 
 // Get /user/chats => checks if user is in db and then returns the chats for that user
-"/user/chats", JSON(User) 
+"/user/chats", userId
+
+// Get /chats/messages => returns the messages from a chat
+"/chats/messages", messageId 
     
 // Get /chats/:chatId => returns the chat with the chadId
 "/chats/:chatId", chatId

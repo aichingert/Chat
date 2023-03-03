@@ -18,10 +18,10 @@ export class MessageController {
         return message;
     }
 
-    async get_messages_from(chat_id: number): Promise<Message[] | string> {
+    async getMessagesFrom(chatId: number): Promise<Message[] | string> {
         const messages: Message[] = await this.messageRepository
             .createQueryBuilder("message")
-            .where("message.chat_id = :id", { id: chat_id })
+            .where("message.chat_id = :id", { id: chatId })
             .getMany();
 
         if (!messages) {
@@ -46,7 +46,7 @@ export class MessageController {
         return "Message has been removed";
     }
 
-    async remove_all(): Promise<void> {
+    async removeAll(): Promise<void> {
         const all: Message[] = await this.messageRepository.find();
 
         for (const message of all) {

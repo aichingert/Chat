@@ -1,14 +1,14 @@
+import ws from "ws";
+import cors from "cors";
 import express from "express";
 import { Request, Response } from "express";
 import { port, AppDataSource } from "./data-source";
 import bodyParser from "body-parser"
 import { User } from "./entity/User";
 import { Chat } from "./entity/Chat";
+import {Message} from "./entity/Message";
 import { UserController} from "./controller/UserController";
 import { ChatController } from "./controller/ChatController";
-import ws from "ws";
-import cors from "cors";
-import {Message} from "./entity/Message";
 import {MessageController} from "./controller/MessageController";
 
 const userController: UserController = new UserController();
@@ -29,31 +29,36 @@ AppDataSource.initialize().then(async () => {
     app.post("/login", async (req: Request, res: Response): Promise<void> => {
         const user: User = req.body;
 
-        const db_user: User | string = await userController.get_one_by_name(user.name);
-        if(typeof db_user === "string") {
+        const dbUser: User | string = await userController.getOneByName(user.name);
+        if(typeof dbUser === "string") {
             // 404 => Not found
             res.sendStatus(404);
             return;
         }
 
-        websocket.send("approve " + db_user.id);
+        if (user.password !== dbUser.password) {
+            // 400 => Bad request
+            res.sendStatus(400);
+        }
+
+        websocket.send("approve " + dbUser.id);
 
         // 302 => Found
-        res.status(302).send(JSON.stringify(db_user.id));
+        res.status(302).send(JSON.stringify(dbUser.id));
     });
 
     app.post("/logout", async (req: Request, res: Response): Promise<void> => {
         const user: User = req.body;
 
-        const db_user: User | string = await userController.get_one_by_name(user.name);
+        const dbUser: User | string = await userController.getOneByName(user.name);
 
-        if (typeof db_user === "string") {
+        if (typeof dbUser === "string") {
             // 404 => Not found
             res.sendStatus(404);
             return;
         }
 
-        websocket.send("disapprove " + db_user.id);
+        websocket.send("disapprove " + dbUser.id);
 
         // 302 => Found
         res.sendStatus(302);
@@ -68,7 +73,7 @@ AppDataSource.initialize().then(async () => {
             return;
         }
 
-        if (typeof await userController.get_one_by_name(user.name) !== "string") {
+        if (typeof await userController.getOneByName(user.name) !== "string") {
             // 403 => Forbidden
             res.sendStatus(403);
             return;
@@ -81,17 +86,17 @@ AppDataSource.initialize().then(async () => {
     });
 
     app.get("/user/chats", async (req: Request, res: Response): Promise<void> => {
-        const user: User = req.body;
+        const userId: number = Number(req.body.id);
 
-        const db_user: User | string = await userController.get_one_by_name(user.name);
+        const dbUser: User | string = await userController.one(userId);
 
-        if (typeof db_user === "string") {
+        if (typeof dbUser === "string") {
             // 400 => Bad request
             res.sendStatus(400);
             return;
         }
 
-        const chats: Chat[] | string = await chatController.get_user_chats(db_user.id);
+        const chats: Chat[] | string = await chatController.getUserChats(dbUser.id);
 
         if (typeof chats === "string") {
             // 404 Not found
@@ -101,6 +106,20 @@ AppDataSource.initialize().then(async () => {
 
         res.send(JSON.stringify(chats));
     });
+
+    app.get("/chats/messages", async (req: Request, res: Response): Promise<void> => {
+        const chatId: number = Number(req.body.id);
+
+        const messages: Message[] | string = await messageController.getMessagesFrom(chatId);
+
+        if (typeof messages === "string") {
+            // 404 => Not found
+            res.sendStatus(404);
+            return;
+        }
+
+        res.status(200).send(JSON.stringify(messages));
+    })
 
     app.get("/chats/:chatId", async (req: Request, res: Response): Promise<void> => {
         const chat: Chat | string = await chatController.one(Number.parseInt(req.params.chatId));
