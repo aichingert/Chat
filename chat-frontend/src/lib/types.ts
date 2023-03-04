@@ -4,12 +4,15 @@ export interface User {
 }
 
 export interface Chat {
+    id: number,
+    newMessages: number,
     recipient: Contact,
     messages: Message[]
 }
 
 export interface Message {
-    text: string,
+    content: string,
+    written_at: number,
     sender: Contact,
 }
 

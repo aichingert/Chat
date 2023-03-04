@@ -5,8 +5,8 @@ import { digestMessage } from "$lib/hash";
 const emptyHash = digestMessage("");
 
 export const actions : Actions = {
-    login: async(event) => {
-        let data = await event.request.formData();
+    login: async({request, cookies, fetch}) => {
+        let data = await request.formData();
         let username = data.get("username") as string;
         let password = await digestMessage(data.get("password") as string);
         
@@ -22,7 +22,7 @@ export const actions : Actions = {
         });
         if(raw.status != 302) return;   
         let response = await raw.text();
-        event.cookies.set("id", response, {
+        cookies.set("id", response, {
             maxAge: 60*60*24,
             secure: true,
             path:"/",

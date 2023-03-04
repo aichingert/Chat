@@ -1,31 +1,50 @@
 import type { PageServerLoad } from "./$types"
 import type { User, Chat, Message } from "$lib/types"
+import { redirect } from "@sveltejs/kit";
 
 export const load : PageServerLoad = (async({cookies}) => {
     let id = cookies.get("id");
 
-    let chats : Chat[] = [];
-    let messages: Message[] = [];
-    for(let i = 0; i < 30; i++){
-        messages.push({
-            sender: {name:"e"},
-            text:"text"
+    if(!id) throw redirect(307, "/auth/login");
+
+    id = 4;
+
+    let raw = await fetch("http://127.0.0.1:3000/user/chats", {
+        method: "POST",
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            id:id
         })
+    });
+
+    const chatsFromDB : Chat[] = await raw.json();
+
+    raw = await fetch("http://127.0.0.1:3000/user", {
+        method: "POST",
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            id:id
+        })
+    })
+
+    const userFromDB = await raw.json();
+
+    for(const chat of chatsFromDB){
+        chat.messages.reverse();
     }
 
-
-    for(let i = 0; i < 30; i++){
-        chats.push({
-            messages: messages,
-            recipient: {name: `${i}`}
-        })
+    let user : User = {
+        id: Number(id),
+        name: userFromDB.name
     }
 
-
-    let user : User = {} as User;
     // do request
     return {
         user: user,
-        chats: chats,
+        chats: chatsFromDB,
     }
 });

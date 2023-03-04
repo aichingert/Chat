@@ -10,6 +10,7 @@ import {Message} from "./entity/Message";
 import { UserController} from "./controller/UserController";
 import { ChatController } from "./controller/ChatController";
 import {MessageController} from "./controller/MessageController";
+import { type } from "os";
 
 const userController: UserController = new UserController();
 const chatController: ChatController = new ChatController();
@@ -85,7 +86,21 @@ AppDataSource.initialize().then(async () => {
         res.status(201).send(JSON.stringify(id));
     });
 
-    app.get("/user/chats", async (req: Request, res: Response): Promise<void> => {
+    app.post("/user", async(req : Request, res : Response) : Promise<void> => {
+        const userId: number = Number(req.body.id);
+
+        const dbUser : User | string = await userController.one(userId);
+
+        if (typeof dbUser === "string") {
+            // 400 => Bad request
+            res.sendStatus(400);
+            return;
+        }
+
+        res.send(JSON.stringify({name:dbUser.name}));
+    });
+
+    app.post("/user/chats", async (req: Request, res: Response): Promise<void> => {
         const userId: number = Number(req.body.id);
 
         const dbUser: User | string = await userController.one(userId);
@@ -104,10 +119,59 @@ AppDataSource.initialize().then(async () => {
             return;
         }
 
-        res.send(JSON.stringify(chats));
+        let parsedChats : {
+                id: number,
+                newMessages: number,
+                recipient: {
+                    name: string
+                },
+                messages: {
+                    content: string,
+                    written_at: number,
+                    sender: {
+                        name: string
+                    },
+                }[]
+        }[] = [];
+
+        for(const chat of chats){
+            let recipientId = dbUser.id === chat.user1_id ? chat.user2_id : chat.user2_id;
+            let recipient = await userController.one(recipientId);
+            if(typeof recipient === "string") return;
+
+            let parsedMessages : {
+                content: string,
+                written_at: number,
+                sender: {
+                    name: string
+                },
+            }[] = [];
+
+            let messages = await messageController.getMessagesFrom(chat.id);
+            if(typeof messages === "string") return;
+            for(const message of messages){
+                let sender = await userController.one(message.user_id);
+                if(typeof sender === "string") return;
+
+                parsedMessages.push({
+                    content: message.content,
+                    sender: { name: sender.name },
+                    written_at: message.written_at
+                })
+            }
+                
+            parsedChats.push({
+                id: chat.id,
+                newMessages: chat.new,
+                recipient: {name: recipient.name},
+                messages: parsedMessages
+            })
+        }
+
+        res.send(JSON.stringify(parsedChats));
     });
 
-    app.get("/chats/messages", async (req: Request, res: Response): Promise<void> => {
+    app.post("/chats/messages", async (req: Request, res: Response): Promise<void> => {
         const chatId: number = Number(req.body.id);
 
         const messages: Message[] | string = await messageController.getMessagesFrom(chatId);
@@ -117,8 +181,27 @@ AppDataSource.initialize().then(async () => {
             res.sendStatus(404);
             return;
         }
+    
+        let arr : {
+            content: string,
+            written_at: number,
+            sender: {
+                name: string
+            },
+        }[] = [];
 
-        res.status(200).send(JSON.stringify(messages));
+        for(const message of messages){
+            let sender = await userController.one(message.user_id);
+            if(typeof sender === "string") return;
+
+            arr.push({
+                content: message.content,
+                sender: {name: sender.name},
+                written_at: message.written_at
+            });
+        }
+
+        res.status(200).send(JSON.stringify(arr));
     })
 
     app.get("/chats/:chatId", async (req: Request, res: Response): Promise<void> => {
@@ -169,7 +252,7 @@ AppDataSource.initialize().then(async () => {
      */
 
     // Test users, chats and messages => for testing
-    // await loadTestData();
+    await loadTestData();
 
     console.log(`Express server has started on port ${port}.`);
 }).catch(error => console.log(error))

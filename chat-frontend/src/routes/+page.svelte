@@ -1,10 +1,9 @@
 <script lang="ts">
-    import type { Chat } from "$lib/types";
+    import type { Chat, Message } from "$lib/types";
 	import { onMount } from "svelte";
 	import type { PageData } from "./$types";
 
     export let data : PageData;
-    let chats = data.chats;
 
     let currentChat : Chat;
     $: currentChat;
@@ -15,8 +14,20 @@
         connection = window.navigator.onLine;
         window.addEventListener("online", () => connection = true);
         window.addEventListener("offline", () => connection = false);
-        console.log(data)
     });
+
+    const scrollToBottom = (node : HTMLDivElement) => {
+        const scroll = () => node.scroll({
+            top: node.scrollHeight,
+            behavior: 'smooth',
+        });
+        scroll();
+
+        return { update: scroll }
+    };
+
+    let messageInput : HTMLInputElement;
+
 </script>
 
 <div class="grid grid-cols-6 h-screen">
@@ -25,7 +36,7 @@
             <div class="h-10 flex items-center bg-onedark-gray px-2 space-x-2">
                 <div class="rounded-full h-5 w-5 {connection ? "bg-onedark-green" : "bg-onedark-red"}"/>
                 <p class="md:text-lg text-xs">
-                    Luka Civic
+                    {data.user.name}
                 </p>
             </div>
             <div class="h-10 py-2 flex items-center bg-onedark-darkblue px-2">
@@ -37,13 +48,13 @@
                 </form>
             </div>
             <div class="h-[calc(100vh-5rem)] overflow-auto">
-                {#each chats as chat, i}
-                    <div class="h-10 w-full">
-                        <button class="text-center text-xl w-full hover:bg-onedark-darkblue" on:click={(e) => {
-                                currentChat = chats[i];
-                                console.log(currentChat)
-                                console.log(currentChat.messages)
-                            }}>{chat.recipient.name}</button>
+                {#each data.chats as chat, i}
+                    <!-- svelte-ignore a11y-click-events-have-key-events -->
+                    <div class="h-10 w-full flex items-center justify-center space-x-2 hover:bg-onedark-darkblue hover:cursor-pointer" on:click={(e) => currentChat = data.chats[i]}>
+                        <button class="text-center text-xl">{chat.recipient.name}</button>
+                        <div class="flex justify-center items-center rounded-full w-5 h-5 bg-onedark-red ">
+                            <p class="text-onedark-gray">{chat.newMessages}</p>
+                        </div>
                     </div>
                 {/each}
             </div>
@@ -51,20 +62,28 @@
     </div>
     {#if currentChat}
     <div class="col-span-5 h-screen bg-onedark-darkblue">
-        <div class="flex justify-center items-center h-10 px-2 bg-onedark-gray">
-            <p class="text-center w-full text-2xl">{currentChat.recipient.name}</p>
-        </div>
-        <div class="px-4 rounded-md bg-onedark-gray h-[calc(100vh-7rem)] overflow-auto my-1">
-            {#each currentChat.messages as message, i}
-            <div class="w-full">
-                <p class="text-xl text-{i%2==0 ? "right" : "left"}">{message.sender.name}</p>
-                <pre class="text-{i%2==0 ? "right" : "left"}">{message.text}</pre>
+        <div>
+            <div class="flex justify-center items-center h-10 px-2 bg-onedark-gray">
+                <p class="text-center w-full text-2xl">{currentChat.recipient.name}</p>
             </div>
-            {/each}
+            <div use:scrollToBottom class="flex flex-col-reverse px-4 rounded-md bg-onedark-gray h-[calc(100vh-7rem)] overflow-auto my-1">
+                {#each currentChat.messages as message, i}
+                <div class="w-full">
+                    <p class="text-xl text-{i%2==0 ? "right" : "left"}">{message.sender.name}</p>
+                    <pre class="text-{i%2==0 ? "right" : "left"}">{message.content}</pre>
+                </div>
+                {/each}
+            </div>
         </div>
-        <form class="h-16 flex items-center w-full px-2 bg-onedark-gray rounded-md">
-            <input placeholder="message to {currentChat.recipient.name}" class="outline-none h-10 w-11/12 bg-inherit px-2">
-            <button class="w-1/12 flex justify-center">
+        <form class="h-16 flex items-center w-full px-2 bg-onedark-gray rounded-md" on:submit={() => {
+            currentChat.messages.splice(0,0,{content:messageInput.value, sender: {name:data.user.name}, written_at:Date.now()})
+            currentChat = currentChat;
+            messageInput.value = "";
+            messageInput.focus();
+        }}>
+            <!-- svelte-ignore a11y-autofocus -->
+            <input bind:this={messageInput} autofocus placeholder="message to {currentChat.recipient.name}" class="outline-none h-10 w-11/12 bg-inherit px-2">
+            <button type="submit" class="w-1/12 flex justify-center">
                 <svg class="fill-onedark-white" height="40" viewBox="0 96 960 960" width="40"><path d="M120 896V256l760 320-760 320Zm66.666-101.999L707.334 576 186.666 355.999v158.668L428 576l-241.334 60v158.001Zm0 0V355.999 794.001Z"/></svg>
             </button>
         </form>
