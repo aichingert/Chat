@@ -10,7 +10,7 @@
     let socket;
     $: connection = true;
     onMount(() => {
-        //socket = new WebSocket(`https://127.0.0.1:42069?client&id=${sessionStorage.getItem("id")}`);
+        //socket = new WebSocket(`ws://127.0.0.1:42069/?client&id=${data.user.id}`);
         connection = window.navigator.onLine;
         window.addEventListener("online", () => connection = true);
         window.addEventListener("offline", () => connection = false);
@@ -25,6 +25,11 @@
 
         return { update: scroll }
     };
+
+    const formatDate = (written_at : number) => {
+        let date = new Date(written_at);
+        return `${date.toLocaleDateString()} at ${date.getHours()}:${date.getMinutes()}`
+    }
 
     let messageInput : HTMLInputElement;
 
@@ -51,7 +56,7 @@
                 {#each data.chats as chat, i}
                     <!-- svelte-ignore a11y-click-events-have-key-events -->
                     <div class="h-10 w-full flex items-center justify-center space-x-2 hover:bg-onedark-darkblue hover:cursor-pointer" on:click={(e) => currentChat = data.chats[i]}>
-                        <button class="text-center text-xl">{chat.recipient.name}</button>
+                        <p class="text-center text-xl">{chat.recipient.name}</p>
                         <div class="flex justify-center items-center rounded-full w-5 h-5 bg-onedark-red ">
                             <p class="text-onedark-gray">{chat.newMessages}</p>
                         </div>
@@ -69,8 +74,11 @@
             <div use:scrollToBottom class="flex flex-col-reverse px-4 rounded-md bg-onedark-gray h-[calc(100vh-7rem)] overflow-auto my-1">
                 {#each currentChat.messages as message, i}
                 <div class="w-full">
-                    <p class="text-xl text-{i%2==0 ? "right" : "left"}">{message.sender.name}</p>
-                    <pre class="text-{i%2==0 ? "right" : "left"}">{message.content}</pre>
+                    <div class="flex items-end space-x-2">
+                        <p class="text-xl">{message.sender.name}</p>
+                        <p class="text-[#667781]">{formatDate(Number(message.written_at))}</p>
+                    </div>
+                    <pre>{message.content}</pre>
                 </div>
                 {/each}
             </div>
