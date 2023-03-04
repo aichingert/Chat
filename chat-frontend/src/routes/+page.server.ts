@@ -7,7 +7,7 @@ export const load : PageServerLoad = (async({cookies}) => {
 
     if(!id) throw redirect(307, "/auth/login");
 
-    id = 4;
+    id = 1;
 
     let raw = await fetch("http://127.0.0.1:3000/user/chats", {
         method: "POST",

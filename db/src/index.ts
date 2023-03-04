@@ -239,20 +239,25 @@ AppDataSource.initialize().then(async () => {
         res.sendStatus(404);
     });
 
-    app.get("/chats/:chadId/read", async (req: Request, res: Response) => {
+    app.post("/chats/:chadId/read", async (req: Request, res: Response) => {
         const chatId = Number.parseInt(req.params.chatId);
+
+        console.log(chatId);
 
         const chat: Chat | string = await chatController.one(chatId);
 
-        if(typeof chat !== "string"){
-            await chatController.resetNewMessages(chatId);
-            
-            // 200 => OK
-            res.sendStatus(200);
+        console.log(chat)
+
+        if(typeof chat === "string"){
+            // 404 => Not found
+            res.sendStatus(404);
+            return;
         }
 
-        // 404 => Not found
-        res.sendStatus(404);
+        await chatController.resetNewMessages(chatId);
+            
+        // 200 => OK
+        res.sendStatus(200);
     });
 
 
@@ -273,7 +278,7 @@ AppDataSource.initialize().then(async () => {
     app.listen(port);
 
     // Test users, chats and messages => for testing
-    await loadTestData();
+    //await loadTestData();
 
     console.log(`Express server has started on port ${port}.`);
 }).catch(error => console.log(error))

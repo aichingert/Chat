@@ -55,7 +55,10 @@
             <div class="h-[calc(100vh-5rem)] overflow-auto">
                 {#each data.chats as chat, i}
                     <!-- svelte-ignore a11y-click-events-have-key-events -->
-                    <div class="h-10 w-full flex items-center justify-center space-x-2 hover:bg-onedark-darkblue hover:cursor-pointer" on:click={(e) => currentChat = data.chats[i]}>
+                    <div class="h-10 w-full flex items-center justify-center space-x-2 hover:bg-onedark-darkblue hover:cursor-pointer" on:click={async(e) => {
+                            currentChat = data.chats[i];
+                            if(currentChat.newMessages !== 0) if((await fetch(`http://localhost:3000/chats/${currentChat.id}/read`, {method:"Post"})).ok) currentChat.newMessages = 0;
+                        }}>
                         <p class="text-center text-xl">{chat.recipient.name}</p>
                         <div class="flex justify-center items-center rounded-full w-5 h-5 bg-onedark-red ">
                             <p class="text-onedark-gray">{chat.newMessages}</p>
