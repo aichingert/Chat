@@ -21,6 +21,17 @@ export const load : PageServerLoad = (async({cookies}) => {
 
     const chatsFromDB : Chat[] = await raw.json();
 
+    let chats : Chat[] = [];
+
+
+    for(const chatFromDB of chatsFromDB){
+        let chat : Chat = {
+            id : chatFromDB.id,
+            messages: chatFromDB.messages.reverse().forEach(message => message.written_at = Number(message.written_at)),
+            newMessages: chatFromDB.newMessages,
+        };
+    }
+
     raw = await fetch("http://127.0.0.1:3000/user", {
         method: "POST",
         headers: {
@@ -33,9 +44,6 @@ export const load : PageServerLoad = (async({cookies}) => {
 
     const userFromDB = await raw.json();
 
-    for(const chat of chatsFromDB){
-        chat.messages.reverse();
-    }
 
     let user : User = {
         id: Number(id),

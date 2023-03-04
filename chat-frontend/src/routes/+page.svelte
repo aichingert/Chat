@@ -76,7 +76,7 @@
                 <div class="w-full">
                     <div class="flex items-end space-x-2">
                         <p class="text-xl">{message.sender.name}</p>
-                        <p class="text-[#667781]">{formatDate(Number(message.written_at))}</p>
+                        <p class="text-[#667781]">{formatDate(message.written_at)}</p>
                     </div>
                     <pre>{message.content}</pre>
                 </div>
