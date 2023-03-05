@@ -273,6 +273,29 @@ AppDataSource.initialize().then(async () => {
         res.sendStatus(200);
     });
 
+    app.put("/chats", async (req: Request, res: Response) => {
+        const userNameOne: string = req.body.abdul;
+        const userNameTwo: string = req.body.bertl;
+
+        const userOne: User | string = await userController.getOneByName(userNameOne);
+        const userTwo: User | string = await userController.getOneByName(userNameTwo);
+
+        if(typeof userOne === "string" || typeof userTwo === "string"){
+            // 404 => Not Found
+            res.sendStatus(404);
+            return;
+        }
+
+        const chat: Chat = new Chat();
+
+        chat.user1_id = userOne.id;
+        chat.user2_id = userTwo.id;
+        chat.new = 0;
+
+        // 201 => Created
+        res.sendStatus(201);
+    });
+
     app.get("/see/users", async (req: Request, res: Response) => {
         const users: User[] = await userController.all();
         res.send(users);
