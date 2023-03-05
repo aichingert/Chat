@@ -58,8 +58,10 @@ wss.on("connection", (ws: ws.WebSocket, request: IncomingMessage) => {
                     approvedIds = approvedIds.filter((id: number) => id !== Number.parseInt(args.shift()!.trim()));
                 break;
                 case "chat":
-                    webSocketWrappers.filter(ws => ws.id === Number.parseInt(args.shift()!.trim()))
-                        .forEach(ws => ws.send(args.shift()!.trim()));
+                    let sentId = Number.parseInt(args.shift()!.trim());
+                    let toName = args.shift()!.trim();
+                    webSocketWrappers.filter(ws => ws.id === sentId)
+                        .forEach(ws => ws.send(toName));
                 break;
             }
         } else {
