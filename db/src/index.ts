@@ -225,28 +225,24 @@ AppDataSource.initialize().then(async () => {
         const message: Message = req.body;
         const chat: Chat | string = await chatController.one(chatId);
 
-        if(typeof chat !== "string"){
-            message.chat_id = chatId;
-
-            await messageController.save(message); 
-            await chatController.newMessage(chatId);
-            
-            // 201 => Created
-            res.sendStatus(201);
+        if(typeof chat === "string"){
+            // 404 => Not found
+            res.sendStatus(404);
+            return;
         }
 
-        // 404 => Not found
-        res.sendStatus(404);
+        message.chat_id = chatId;
+
+        await messageController.save(message);
+        await chatController.newMessage(chatId);
+
+        // 201 => Created
+        res.sendStatus(201);
     });
 
-    app.post("/chats/:chadId/read", async (req: Request, res: Response) => {
+    app.get("/chats/:chatId/read", async (req: Request, res: Response) => {
         const chatId = Number.parseInt(req.params.chatId);
-
-        console.log(chatId);
-
         const chat: Chat | string = await chatController.one(chatId);
-
-        console.log(chat)
 
         if(typeof chat === "string"){
             // 404 => Not found
@@ -260,6 +256,18 @@ AppDataSource.initialize().then(async () => {
         res.sendStatus(200);
     });
 
+    app.get("/messages/:messageId/delete", async (req: Request, res: Response) => {
+        const messageCode: string = await messageController.remove(Number.parseInt(req.params.messageId));
+
+        if(messageCode === "Message does not exist"){
+            // 404 => Not found
+            res.sendStatus(404);
+            return;
+        }
+
+        // 200 => OK
+        res.sendStatus(200);
+    });
 
     app.get("/see/users", async (req: Request, res: Response) => {
         const users: User[] = await userController.all();
