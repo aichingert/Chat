@@ -54,9 +54,9 @@ AppDataSource.initialize().then(async () => {
     });
 
     app.post("/logout", async (req: Request, res: Response): Promise<void> => {
-        const user: User = req.body;
+        const userId : number = Number(req.body.id);
 
-        const dbUser: User | string = await userController.getOneByName(user.name);
+        const dbUser: User | string = await userController.one(userId);
 
         if (typeof dbUser === "string") {
             // 404 => Not found
@@ -300,9 +300,9 @@ AppDataSource.initialize().then(async () => {
         chat.user2_id = userTwo.id;
         chat.new = 0;
 
-        chatController.save(chat);
+        let a = await chatController.save(chat);
 
-        websocket.send(`chat ${userOne.id} ${userTwo.id}`);
+        websocket.send(`chat ${userOne.id} ${userTwo.id} ${userOne.name} ${userTwo.name} ${a.id}`);
 
         // 201 => Created
         res.sendStatus(201);

@@ -14,24 +14,38 @@
         socket = new WebSocket(`ws://127.0.0.1:42069/?client&id=${data.user.id}`);
         socket.onmessage = async(e) => {
             console.log(e.data)
-            let retard = JSON.parse(e.data);
-            let messageWhereChatShouldBe = data.chats.filter(chat => chat.id === retard.chat_id)[0];
-            messageWhereChatShouldBe.messages.splice(0,0,{content:retard.content, sender: {name:retard.sender.name}, written_at:retard.written_at})
-            data = data;
-            if(currentChat === messageWhereChatShouldBe){
-                if(messageWhereChatShouldBe.messages[0].sender.name !== data.user.name){
-                    if((await fetch(`http://localhost:3000/chats/${currentChat.id}/read`)).ok)
-                    {
-                        currentChat.newMessages = 0;
-                        data = data;
-                    } 
+            try {
+                let retard = JSON.parse(e.data);
+                let messageWhereChatShouldBe = data.chats.filter(chat => chat.id === retard.chat_id)[0];
+                messageWhereChatShouldBe.messages.splice(0,0,{content:retard.content, sender: {name:retard.sender.name}, written_at:retard.written_at})
+                data = data;
+                if(currentChat === messageWhereChatShouldBe){
+                    if(messageWhereChatShouldBe.messages[0].sender.name !== data.user.name){
+                        if((await fetch(`http://localhost:3000/chats/${currentChat.id}/read`)).ok)
+                        {
+                            currentChat.newMessages = 0;
+                            data = data;
+                        } 
+                    }
                 }
+                else {
+                    messageWhereChatShouldBe.newMessages++;
+                    messageWhereChatShouldBe = messageWhereChatShouldBe;
+                }
+                currentChat = currentChat;
             }
-            else {
-                messageWhereChatShouldBe.newMessages++;
-                messageWhereChatShouldBe = messageWhereChatShouldBe;
+            catch{
+                let contactName = e.data.split(":")[0];
+                let chadId = Number(e.data.split(":")[1]);
+
+                data.chats.push({
+                    id: chadId,
+                    messages: [],
+                    newMessages: 0,
+                    recipient: {name:contactName}
+                })
+                data = data;
             }
-            currentChat = currentChat;
         }
         connection = window.navigator.onLine;
         window.addEventListener("online", () => connection = true);
@@ -64,6 +78,11 @@
                 <p class="md:text-lg text-xs">
                     {data.user.name}
                 </p>
+                <form class="flex w-full justify-end" method="post" action="?/logout" use:enhance>
+                    <button type="submit">
+                        <svg class="fill-onedark-lightgray hover:fill-onedark-red" height="24" viewBox="0 96 960 960" width="24"><path d="M200 936q-33 0-56.5-23.5T120 856V296q0-33 23.5-56.5T200 216h280v80H200v560h280v80H200Zm440-160-55-58 102-102H360v-80h327L585 434l55-58 200 200-200 200Z"/></svg>                
+                    </button>
+                </form>
             </div>
             <div class="h-10 py-2 flex items-center bg-onedark-darkblue px-2">
                 <form method="post" action="?/add" use:enhance class="flex items-center bg-onedark-gray w-full px-2 rounded-md">

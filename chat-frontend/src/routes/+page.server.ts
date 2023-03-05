@@ -7,15 +7,22 @@ export const load : PageServerLoad = (async({cookies}) => {
 
     if(!id) throw redirect(307, "/auth/login");
 
-    let raw = await fetch("http://127.0.0.1:3000/user/chats", {
-        method: "POST",
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            id:id
-        })
-    });
+    let raw;
+    try{
+        raw = await fetch("http://127.0.0.1:3000/user/chats", {
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                id:id
+            })
+        });
+    }
+    catch{
+        throw redirect(307, "/auth/login");
+    }
+
 
     const chatsFromDB : Chat[] = await raw.json();
 
@@ -61,9 +68,7 @@ export const actions : Actions = {
         const formData = await event.request.formData();
         const chatUserName = await formData.get("chat") as string;
 
-        console.log(event.cookies.get("id"))
-
-        fetch("http://127.0.0.1:3000/chats", {
+        await fetch("http://127.0.0.1:3000/chats", {
             method:"PUT",
             headers: {
                 'Content-Type': 'application/json'
@@ -73,5 +78,23 @@ export const actions : Actions = {
                 bertl: chatUserName
             })
         })
+    },
+
+    logout: async(event) => {
+        await fetch("http://127.0.0.1:3000/logout", {
+            method:"POST",
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                id: event.cookies.get("id")
+            })
+        });
+
+        event.cookies.delete("id", {
+            path: "/"
+        });
+
+        throw redirect(300, "/auth/login")
     }
 }
