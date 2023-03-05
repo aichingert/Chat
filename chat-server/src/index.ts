@@ -14,11 +14,11 @@ export function getUser(id: number): WebSocketWrapper[] {
     return webSocketWrappers.filter((ws: WebSocketWrapper) => ws.id === id);
 }
 
-function sendMessage(msg: Message, chat: Chat) {
-    chat.webSocketIds.forEach(async (wsId: number) => {
-        let users: WebSocketWrapper[] = getUser(wsId);
+async function sendMessage(msg: Message, chat: Chat) {
+    let res = await axios.put(`http://127.0.0.1:3000/chats/${msg.chat_id}/message`, msg).catch(e => console.error(e.message)) as AxiosResponse<any, Message>;
 
-        let res = await axios.put(`http://127.0.0.1:3000/chats/${msg.chat_id}/message`, msg).catch(e => console.error(e.message)) as AxiosResponse<any, Message>;
+    chat.webSocketIds.forEach((wsId: number) => {
+        let users: WebSocketWrapper[] = getUser(wsId);
 
         if (users.length !== 0) {
             users.forEach((user: WebSocketWrapper) => user.send(JSON.stringify(res.data)));
