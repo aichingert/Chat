@@ -292,6 +292,8 @@ AppDataSource.initialize().then(async () => {
         chat.user2_id = userTwo.id;
         chat.new = 0;
 
+        chatController.save(chat);
+
         // 201 => Created
         res.sendStatus(201);
     });
