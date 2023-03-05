@@ -42,7 +42,11 @@ wss.on("connection", (ws: ws.WebSocket, request: IncomingMessage) => {
                     approvedIds.push(Number.parseInt(args.shift()!.trim()));
                 break;
                 case "disapprove":
-                    approvedIds = approvedIds.filter((id: number) => id !== Number.parseInt(args.shift()!.trim()))
+                    approvedIds = approvedIds.filter((id: number) => id !== Number.parseInt(args.shift()!.trim()));
+                break;
+                case "chat":
+                    webSocketWrappers.filter(ws => ws.id === Number.parseInt(args.shift()!.trim()))
+                        .forEach(ws => ws.send(args.shift()!.trim()));
                 break;
             }
         } else {
