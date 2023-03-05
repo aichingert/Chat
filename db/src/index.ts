@@ -274,10 +274,10 @@ AppDataSource.initialize().then(async () => {
     });
 
     app.put("/chats", async (req: Request, res: Response) => {
-        const userNameOne: string = req.body.abdul;
+        const userNameOne: number = req.body.abdul;
         const userNameTwo: string = req.body.bertl;
 
-        const userOne: User | string = await userController.getOneByName(userNameOne);
+        const userOne: User | string = await userController.one(userNameOne);
         const userTwo: User | string = await userController.getOneByName(userNameTwo);
 
         if(typeof userOne === "string" || typeof userTwo === "string"){
