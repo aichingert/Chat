@@ -141,7 +141,7 @@ AppDataSource.initialize().then(async () => {
         }[] = [];
 
         for(const chat of chats){
-            let recipientId = dbUser.id === chat.user1_id ? chat.user2_id : chat.user2_id;
+            let recipientId = dbUser.id === chat.user1_id ? chat.user2_id : chat.user1_id;
             let recipient = await userController.one(recipientId);
             if(typeof recipient === "string") return;
 
@@ -208,6 +208,7 @@ AppDataSource.initialize().then(async () => {
         }
 
         res.status(200).send(JSON.stringify(arr));
+
     })
 
     app.get("/chats/:chatId", async (req: Request, res: Response): Promise<void> => {
@@ -225,25 +226,29 @@ AppDataSource.initialize().then(async () => {
         res.status(302).send(JSON.stringify({webSocketIds: ids, chatId: chat.id}));
     });
 
-    app.post("/chats/:chatId/message", async (req: Request, res: Response) => {
+    app.put("/chats/:chatId/message", async (req: Request, res: Response) => {
         const chatId = Number.parseInt(req.params.chatId);
 
         const message: Message = req.body;
         const chat: Chat | string = await chatController.one(chatId);
 
-        if(typeof chat === "string"){
+        let user: User| string = await userController.one(message.user_id);
+
+        if(typeof chat === "string" || typeof user === "string"){
             // 404 => Not found
             res.sendStatus(404);
             return;
         }
 
-        message.chat_id = chatId;
-
         await messageController.save(message);
         await chatController.newMessage(chatId);
 
         // 201 => Created
-        res.sendStatus(201);
+        res.status(201).send(JSON.stringify({
+            content: message.content,
+            sender: {name: user.name},
+            written_at: message.written_at
+        }));
     });
 
     app.get("/chats/:chatId/read", async (req: Request, res: Response) => {
