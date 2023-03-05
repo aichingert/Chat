@@ -60,6 +60,7 @@ wss.on("connection", (ws: ws.WebSocket, request: IncomingMessage) => {
                 try {
                     res = await axios.get(`http://127.0.0.1:3000/chats/${message.chat_id}`);
                     chat = res.data;
+                    loadedChats.push(chat);
                 } catch (e) {
                     console.error(e);
                     return;
