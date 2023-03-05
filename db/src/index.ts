@@ -219,8 +219,10 @@ AppDataSource.initialize().then(async () => {
             return;
         }
 
+        let ids: number[] = [chat.user1_id, chat.user2_id];
+
         // 302 => Found
-        res.status(302).send(JSON.stringify(chat));
+        res.status(302).send(JSON.stringify({webSocketIds: ids, chatId: chat.id}));
     });
 
     app.post("/chats/:chatId/message", async (req: Request, res: Response) => {
@@ -274,10 +276,10 @@ AppDataSource.initialize().then(async () => {
     });
 
     app.put("/chats", async (req: Request, res: Response) => {
-        const userNameOne: number = req.body.abdul;
+        const userIDOne: number = req.body.abdul;
         const userNameTwo: string = req.body.bertl;
 
-        const userOne: User | string = await userController.one(userNameOne);
+        const userOne: User | string = await userController.one(userIDOne);
         const userTwo: User | string = await userController.getOneByName(userNameTwo);
 
         if(typeof userOne === "string" || typeof userTwo === "string"){
