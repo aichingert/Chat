@@ -64,7 +64,7 @@ wss.on("connection", (ws: ws.WebSocket, request: IncomingMessage) => {
                     let toName = args.shift()!.trim();
                     let chatId = args.shift()!.trim();
                     webSocketWrappers.filter(ws => ws.id === sentId)[0].send(`${toName}:${chatId}`);
-                    webSocketWrappers.filter(ws => ws.id === receiveId)[0].send(`${sentName}:${chatId}`);
+                    webSocketWrappers.filter(ws => ws.id !== sentId)[0].send(`${sentName}:${chatId}`);
 
                 break;
             }
