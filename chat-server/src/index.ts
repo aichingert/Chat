@@ -8,7 +8,7 @@ const wss = new ws.Server({ port: 42069 });
 let bot: ExpressSocket | null = null;
 let approvedIds: number[] = [];
 let webSocketWrappers: WebSocketWrapper[] = [];
-let loadedChats: Chat[];
+let loadedChats: Chat[] = [];
 
 export function getUser(id: number): WebSocketWrapper[] {
     return webSocketWrappers.filter((ws: WebSocketWrapper) => ws.id === id);
