@@ -222,8 +222,8 @@ AppDataSource.initialize().then(async () => {
 
         let ids: number[] = [chat.user1_id, chat.user2_id];
 
-        // 302 => Found
-        res.status(302).send(JSON.stringify({webSocketIds: ids, chatId: chat.id}));
+        // 202 => Found
+        res.status(202).send(JSON.stringify({webSocketIds: ids, chatId: chat.id}));
     });
 
     app.put("/chats/:chatId/message", async (req: Request, res: Response) => {
@@ -245,6 +245,7 @@ AppDataSource.initialize().then(async () => {
 
         // 201 => Created
         res.status(201).send(JSON.stringify({
+            chat_id: message.chat_id,
             content: message.content,
             sender: {name: user.name},
             written_at: message.written_at
@@ -300,6 +301,8 @@ AppDataSource.initialize().then(async () => {
         chat.new = 0;
 
         chatController.save(chat);
+
+        websocket.send(`chat ${userOne.id} ${userTwo.id}`);
 
         // 201 => Created
         res.sendStatus(201);

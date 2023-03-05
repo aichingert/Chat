@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { enhance } from "$app/forms";
     import type { Chat, Message } from "$lib/types";
 	import { onMount } from "svelte";
 	import type { PageData } from "./$types";
@@ -6,11 +7,32 @@
     export let data : PageData;
 
     let currentChat : Chat;
+    let socket : WebSocket;
     $: currentChat;
-    let socket;
     $: connection = true;
     onMount(() => {
-        //socket = new WebSocket(`ws://127.0.0.1:42069/?client&id=${data.user.id}`);
+        socket = new WebSocket(`ws://127.0.0.1:42069/?client&id=${data.user.id}`);
+        socket.onmessage = async(e) => {
+            console.log(e.data)
+            let retard = JSON.parse(e.data);
+            let messageWhereChatShouldBe = data.chats.filter(chat => chat.id === retard.chat_id)[0];
+            messageWhereChatShouldBe.messages.splice(0,0,{content:retard.content, sender: {name:retard.sender.name}, written_at:retard.written_at})
+            data = data;
+            if(currentChat === messageWhereChatShouldBe){
+                if(messageWhereChatShouldBe.messages[0].sender.name !== data.user.name){
+                    if((await fetch(`http://localhost:3000/chats/${currentChat.id}/read`)).ok)
+                    {
+                        currentChat.newMessages = 0;
+                        data = data;
+                    } 
+                }
+            }
+            else {
+                messageWhereChatShouldBe.newMessages++;
+                messageWhereChatShouldBe = messageWhereChatShouldBe;
+            }
+            currentChat = currentChat;
+        }
         connection = window.navigator.onLine;
         window.addEventListener("online", () => connection = true);
         window.addEventListener("offline", () => connection = false);
@@ -32,7 +54,6 @@
     }
 
     let messageInput : HTMLInputElement;
-
 </script>
 
 <div class="grid grid-cols-6 h-screen">
@@ -45,26 +66,38 @@
                 </p>
             </div>
             <div class="h-10 py-2 flex items-center bg-onedark-darkblue px-2">
-                <form class="flex items-center bg-onedark-gray w-full px-2 rounded-md">
+                <form method="post" action="?/add" use:enhance class="flex items-center bg-onedark-gray w-full px-2 rounded-md">
                     <button class="px-2 flex justify-center" type="submit">
-                        <svg class="fill-onedark-white" height="24" viewBox="0 96 960 960" width="24"><path d="M784 936 532 684q-30 24-69 38t-83 14q-109 0-184.5-75.5T120 476q0-109 75.5-184.5T380 216q109 0 184.5 75.5T640 476q0 44-14 83t-38 69l252 252-56 56ZM380 656q75 0 127.5-52.5T560 476q0-75-52.5-127.5T380 296q-75 0-127.5 52.5T200 476q0 75 52.5 127.5T380 656Z"/></svg>
+                        <svg class="fill-onedark-lightgray" height="24" viewBox="0 96 960 960" width="24"><path d="M440 856V616H200v-80h240V296h80v240h240v80H520v240h-80Z"/></svg>
                     </button>
-                    <input name="search" placeholder="search chats" class="placeholder-onedark-lightgray outline-none bg-inherit w-11/12">
-                </form>
+                    <input name="chat" placeholder="add chat" class="placeholder-onedark-lightgray outline-none bg-inherit w-11/12">
+                </form> 
             </div>
             <div class="h-[calc(100vh-5rem)] overflow-auto">
                 {#each data.chats as chat, i}
                     <!-- svelte-ignore a11y-click-events-have-key-events -->
                     <div class="h-10 w-full flex items-center justify-center space-x-2 hover:bg-onedark-darkblue hover:cursor-pointer" on:click={async(e) => {
                             currentChat = data.chats[i];
-                            if(currentChat.newMessages !== 0) if((await fetch(`http://localhost:3000/chats/${currentChat.id}/read`, {method:"Post"})).ok) currentChat.newMessages = 0;
+                            if(currentChat.newMessages !== 0){
+                                if(currentChat.messages[0].sender.name !== data.user.name){
+                                    if((await fetch(`http://localhost:3000/chats/${currentChat.id}/read`)).ok)
+                                    {
+                                        currentChat.newMessages = 0;
+                                        currentChat = currentChat;
+                                        data = data;
+                                    } 
+                                }
+                            } 
                         }}>
                         <p class="text-center text-xl">{chat.recipient.name}</p>
+                        {#if chat.newMessages !== 0 && chat.messages[0].sender.name !== data.user.name }
                         <div class="flex justify-center items-center rounded-full w-5 h-5 bg-onedark-red ">
                             <p class="text-onedark-gray">{chat.newMessages}</p>
                         </div>
+                        {/if}
+
                     </div>
-                {/each}
+                {/each} 
             </div>
         </div>  
     </div>
@@ -76,19 +109,30 @@
             </div>
             <div use:scrollToBottom class="flex flex-col-reverse px-4 rounded-md bg-onedark-gray h-[calc(100vh-7rem)] overflow-auto my-1">
                 {#each currentChat.messages as message, i}
-                <div class="w-full">
-                    <div class="flex items-end space-x-2">
+                <div class="w-full group">
+                    <div class="w-full flex items-end space-x-2">
                         <p class="text-xl">{message.sender.name}</p>
-                        <p class="text-[#667781]">{formatDate(message.written_at)}</p>
+                        <p class="text-[#667781] w-1/2">{formatDate(message.written_at)}</p>
+                        {#if message.sender.name === data.user.name}
+                        <div class="group-hover:visible w-full flex justify-end">
+                            <button>
+                                <svg class="fill-onedark-red" height="20" viewBox="0 96 960 960" width="20"><path d="M312 912q-29.7 0-50.85-21.15Q240 869.7 240 840V360h-48v-72h192v-48h192v48h192v72h-48v479.566Q720 870 698.85 891 677.7 912 648 912H312Zm336-552H312v480h336V360ZM384 768h72V432h-72v336Zm120 0h72V432h-72v336ZM312 360v480-480Z"/></svg>
+                            </button>
+                        </div>
+                        {/if}
                     </div>
                     <pre>{message.content}</pre>
                 </div>
                 {/each}
             </div>
         </div>
-        <form class="h-16 flex items-center w-full px-2 bg-onedark-gray rounded-md" on:submit={() => {
-            currentChat.messages.splice(0,0,{content:messageInput.value, sender: {name:data.user.name}, written_at:Date.now()})
-            currentChat = currentChat;
+        <form class="h-16 flex items-center w-full px-2 bg-onedark-gray rounded-md" on:submit={(e) => {
+            socket.send(JSON.stringify({
+                user_id: data.user.id,
+                chat_id: currentChat.id,
+                content: messageInput.value,
+                written_at: Date.now()
+            }));
             messageInput.value = "";
             messageInput.focus();
         }}>

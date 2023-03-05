@@ -1,13 +1,11 @@
 import type { PageServerLoad } from "./$types"
 import type { User, Chat, Message } from "$lib/types"
-import { redirect } from "@sveltejs/kit";
+import { redirect, type Actions } from "@sveltejs/kit";
 
 export const load : PageServerLoad = (async({cookies}) => {
     let id = cookies.get("id");
 
     if(!id) throw redirect(307, "/auth/login");
-
-    id = 1;
 
     let raw = await fetch("http://127.0.0.1:3000/user/chats", {
         method: "POST",
@@ -56,3 +54,24 @@ export const load : PageServerLoad = (async({cookies}) => {
         chats: chatsFromDB,
     }
 });
+
+
+export const actions : Actions = {
+    add: async(event) => {
+        const formData = await event.request.formData();
+        const chatUserName = await formData.get("chat") as string;
+
+        console.log(event.cookies.get("id"))
+
+        fetch("http://127.0.0.1:3000/chats", {
+            method:"PUT",
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                abdul: event.cookies.get("id"),
+                bertl: chatUserName
+            })
+        })
+    }
+}
