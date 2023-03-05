@@ -11,6 +11,9 @@ import { UserController} from "./controller/UserController";
 import { ChatController } from "./controller/ChatController";
 import {MessageController} from "./controller/MessageController";
 import { type } from "os";
+import {config} from "dotenv"
+
+config();
 
 const userController: UserController = new UserController();
 const chatController: ChatController = new ChatController();
@@ -84,7 +87,8 @@ AppDataSource.initialize().then(async () => {
 
         const id: number = (await userController.save(user)).id;
 
-        websocket.send(id);
+        websocket.send("approve " + id);
+
         res.status(201).send(JSON.stringify(id));
     });
 
@@ -286,12 +290,13 @@ AppDataSource.initialize().then(async () => {
     app.listen(port);
 
     // Test users, chats and messages => for testing
-    //await loadTestData();
+    await loadTestData();
 
     console.log(`Express server has started on port ${port}.`);
 }).catch(error => console.log(error))
 
 async function loadTestData() {
+
     // Creating users
     const Michael = new User();
     Michael.name = "Michael";
@@ -342,9 +347,8 @@ async function loadTestData() {
     await messageController.save(messageInChatMH);
     await messageController.save(messageInChatHM);
 
-    /* Clean up
-    await messageController.remove_all();
-    await chatController.remove_all();
-    await userController.remove_all();
-     */
+    // Clean up
+    await messageController.removeAll();
+    await chatController.removeAll();
+    await userController.removeAll();
 }
