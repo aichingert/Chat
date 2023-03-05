@@ -58,14 +58,37 @@ wss.on("connection", (ws: ws.WebSocket, request: IncomingMessage) => {
                     approvedIds = approvedIds.filter((id: number) => id !== Number.parseInt(args.shift()!.trim()));
                 break;
                 case "chat":
+                    if (args.length === 5) {
+                        let sentId = Number.parseInt(args.shift()!.trim());
+                        let receiveId = Number.parseInt(args.shift()!.trim())
+                        let sentName = args.shift()!.trim();
+                        let toName = args.shift()!.trim();
+                        let chatId = args.shift()!.trim();
+                        webSocketWrappers.filter(ws => ws.id === sentId).forEach(ws => ws.send(`${toName}:${chatId}`));
+                        webSocketWrappers.filter(ws => ws.id === receiveId).forEach(ws => ws.send(`${sentName}:${chatId}`));
+                    } else if (args.length > 2) {
+                        let chatId = args.shift()!.trim();
+                        let chatName = args.shift()!.trim();
+                        let ids = args.map(arg => Number.parseInt(arg));
+
+                        webSocketWrappers.filter(ws => ids.includes(ws.id))
+                            .forEach(ws => ws.send(JSON.stringify({
+                                chatId: chatId,
+                                chatName: chatName,
+                                ids: ids
+                            })));
+                    }
+                break;
+                case "delete_message":
+                    let chatId = args.shift()!.trim();
+                    let msgId = args.shift()!.trim();
                     let sentId = Number.parseInt(args.shift()!.trim());
-                    let receiveId = Number.parseInt(args.shift()!.trim())
+                    let toId = Number.parseInt(args.shift()!.trim());
                     let sentName = args.shift()!.trim();
                     let toName = args.shift()!.trim();
-                    let chatId = args.shift()!.trim();
-                    webSocketWrappers.filter(ws => ws.id === sentId)[0].send(`${toName}:${chatId}`);
-                    webSocketWrappers.filter(ws => ws.id !== sentId)[0].send(`${sentName}:${chatId}`);
 
+                    webSocketWrappers.filter(ws => ws.id === sentId).forEach(ws => ws.send(`del ${chatId}:${toName}:${msgId}`));
+                    webSocketWrappers.filter(ws => ws.id === toId).forEach(ws => ws.send(`del ${chatId}:${sentName}:${msgId}`));
                 break;
             }
         } else {
