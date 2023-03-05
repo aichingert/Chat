@@ -19,7 +19,6 @@ export class WebSocketWrapper {
 }
 
 export interface Message {
-    id: number,
     user_id: number,
     chat_id: number,
     content: string,
