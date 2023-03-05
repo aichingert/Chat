@@ -1,7 +1,7 @@
 import ws from "ws";
 import {IncomingMessage} from "http"
 import {Chat, ExpressSocket, Message, WebSocketWrapper} from "./Models";
-import axios, {AxiosResponse} from "axios";
+import axios, {Axios, AxiosResponse} from "axios";
 require("dotenv").config();
 
 const wss = new ws.Server({ port: 42069 });
@@ -15,14 +15,14 @@ export function getUser(id: number): WebSocketWrapper[] {
 }
 
 function sendMessage(msg: Message, chat: Chat) {
-    chat.webSocketIds.filter((webSocket: number) => webSocket !== msg.user_id).forEach((wsId: number) => {
+    chat.webSocketIds.forEach(async (wsId: number) => {
         let users: WebSocketWrapper[] = getUser(wsId);
 
-        if (users.length !== 0) {
-            users.forEach((user: WebSocketWrapper) => user.send(JSON.stringify(msg)));
-        }
+        let res = await axios.put(`http://127.0.0.1:3000/chats/${msg.chat_id}/message`, msg).catch(e => console.error(e.message)) as AxiosResponse<any, Message>;
 
-        axios.put(`http://127.0.0.1:3000/chats/${msg.chat_id}/message`, msg).catch(e => console.error(e.message));
+        if (users.length !== 0) {
+            users.forEach((user: WebSocketWrapper) => user.send(JSON.stringify(res.data)));
+        }
     });
 }
 
