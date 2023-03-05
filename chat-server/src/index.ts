@@ -2,6 +2,7 @@ import ws from "ws";
 import {IncomingMessage} from "http"
 import {Chat, ExpressSocket, Message, WebSocketWrapper} from "./Models";
 import axios, {AxiosResponse} from "axios";
+require("dotenv").config();
 
 const wss = new ws.Server({ port: 42069 });
 let bot: ExpressSocket | null = null;
@@ -20,11 +21,11 @@ wss.on("connection", (ws: ws.WebSocket, request: IncomingMessage) => {
 
     const urlParams: URLSearchParams = new URLSearchParams(request.url!.trim());
     let wsw: WebSocketWrapper;
-    if (bot === null && urlParams.has("type") && urlParams.has("key")) {
-        if (urlParams.get("type") === 'bot' && urlParams.get("key") === process.env.EXPRESS_SERVER_TOKEN) {
+    if (bot === null && urlParams.has("/?type") && urlParams.has("key")) {
+        if (urlParams.get("/?type") === 'bot' && urlParams.get("key") === process.env.EXPRESS_SERVER_TOKEN) {
             bot = new ExpressSocket(ws);
         }
-    } else if (!urlParams.has("id") || !urlParams.has("client") || !approvedIds.includes(Number.parseInt(urlParams.get("id")!))) {
+    } else if (!urlParams.has("id") || !urlParams.has("/?client") || !approvedIds.includes(Number.parseInt(urlParams.get("id")!))) {
         ws.close();
         return;
     } else {
