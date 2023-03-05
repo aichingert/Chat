@@ -14,6 +14,18 @@ export function getUser(id: number): WebSocketWrapper[] {
     return webSocketWrappers.filter((ws: WebSocketWrapper) => ws.id === id);
 }
 
+function sendMessage(msg: Message, chat: Chat) {
+    chat.webSocketIds.filter((webSocket: number) => webSocket !== msg.user_id).forEach((wsId: number) => {
+        let users: WebSocketWrapper[] = getUser(wsId);
+
+        if (users.length !== 0) {
+            users.forEach((user: WebSocketWrapper) => user.send(JSON.stringify(msg)));
+        }
+
+        axios.put(`http://127.0.0.1:3000/chats/${msg.chat_id}/message`, msg).catch(e => console.error(e.message));
+    });
+}
+
 wss.on("connection", (ws: ws.WebSocket, request: IncomingMessage) => {
     if (!request) {
         return;
@@ -67,7 +79,7 @@ wss.on("connection", (ws: ws.WebSocket, request: IncomingMessage) => {
                 }
             }
 
-            chat.sendMessage(message);
+            sendMessage(message, chat);
         }
     })
 
