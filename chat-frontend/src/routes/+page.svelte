@@ -25,7 +25,7 @@
                         id: message.content.chatId,
                         messages: [],
                         newMessages: 0,
-                        recipient: message.content.recipient
+                        recipient: {name : message.content.userName}
                     })
                 }
             }
@@ -42,6 +42,18 @@
                         });
 
                     chat.newMessages++;
+
+                    if(currentChat){
+                        if(currentChat.id == chat.id){
+                            if(currentChat.messages[0]?.sender.name != data.user.name){
+                                if((await fetch(`http://localhost:3000/chats/${currentChat.id}/read`)).ok){
+                                    currentChat.newMessages = 0;
+                                }
+                            }
+                        }
+                    }
+
+
                     data.chats = data.chats;
                     currentChat = currentChat;
                     chat = chat;
@@ -109,10 +121,11 @@
                             currentChat = data.chats[i];
                             if(currentChat.newMessages === 0) return;
                             if(currentChat.messages[0]?.sender.name == data.user.name) return;
-                            if(!(await fetch(`http://localhost:3000/chats/${currentChat.id}/read`)).ok) return;
-                            currentChat.newMessages = 0;
-                            currentChat = currentChat;
-                            data = data;
+                            if((await fetch(`http://localhost:3000/chats/${currentChat.id}/read`)).ok){
+                                currentChat.newMessages = 0;
+                                currentChat = currentChat;
+                                data = data;
+                            }
                         }}>
                         <p class="text-center text-xl">{chat.recipient.name}</p>
                         {#if chat.newMessages !== 0 && chat.messages[0]?.sender.name != data.user.name }

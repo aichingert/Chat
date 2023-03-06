@@ -28,7 +28,9 @@ AppDataSource.initialize().then(async () => {
     app.use(bodyParser.urlencoded({ extended: false }));
     app.use(cors());
 
-    messageController.removeAll();
+    await messageController.removeAll();
+    await chatController.removeAll();
+    await userController.removeAll();
 
     // Express entry points
 
@@ -341,6 +343,8 @@ AppDataSource.initialize().then(async () => {
                 chatId: newChat.id,
                 sentName: userOne.name,
                 toName: userTwo.name,
+                sentId: userOne.id,
+                receiveId: userTwo.id,
             }
         }));
 

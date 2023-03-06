@@ -54,7 +54,7 @@ wss.on("connection", (ws: ws.WebSocket, request: IncomingMessage) => {
                 case "chat":
                     switch (action.action) {
                         case "add":
-                            webSocketWrappers.filter(ws => ws.id === action.content.sentId).forEach(ws => ws.send(JSON.stringify({
+                            webSocketWrappers.filter(ws => ws.id == action.content.sentId).forEach(ws => ws.send(JSON.stringify({
                                 type: "chat",
                                 action: "add",
                                 content: {
@@ -62,7 +62,7 @@ wss.on("connection", (ws: ws.WebSocket, request: IncomingMessage) => {
                                     userName: action.content.toName
                                 }
                             })));
-                            webSocketWrappers.filter(ws => ws.id === action.content.receiveId).forEach(ws => ws.send(JSON.stringify({
+                            webSocketWrappers.filter(ws => ws.id == action.content.receiveId).forEach(ws => ws.send(JSON.stringify({
                                 type: "chat",
                                 action: "add",
                                 content: {
@@ -81,10 +81,6 @@ wss.on("connection", (ws: ws.WebSocket, request: IncomingMessage) => {
 
                             let users: WebSocketWrapper[] = getUsers(action.content.userId1);
                             users.push(... getUsers(action.content.userId2));
-
-                            console.log(users)
-                            console.log(action)
-                            console.log(approvedIds)
 
                             if (users.length !== 0) {
                                 users.forEach((user: WebSocketWrapper) => user.send(JSON.stringify({
