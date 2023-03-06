@@ -18,49 +18,49 @@ export const load : PageServerLoad = (async({cookies}) => {
                 id:id
             })
         });
+
+        const chatsFromDB : Chat[] = await raw.json();
+
+        let chats : Chat[] = [];
+
+
+        for(const chatFromDB of chatsFromDB){
+            let chat : Chat = {
+                id : chatFromDB.id,
+                messages: chatFromDB.messages.reverse().forEach(message => {
+                    message.written_at = Number(message.written_at);
+                    message.id = Number(message.id);
+                }),
+                newMessages: chatFromDB.newMessages,
+            };
+        }
+
+        raw = await fetch("http://127.0.0.1:3000/user", {
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                id:id
+            })
+        })
+
+        const userFromDB = await raw.json();
+
+
+        let user : User = {
+            id: Number(id),
+            name: userFromDB.name
+        }
+
+        return {
+            user: user,
+            chats: chatsFromDB,
+        }
+
     }
     catch{
         throw redirect(307, "/auth/login");
-    }
-
-
-    const chatsFromDB : Chat[] = await raw.json();
-
-    let chats : Chat[] = [];
-
-
-    for(const chatFromDB of chatsFromDB){
-        let chat : Chat = {
-            id : chatFromDB.id,
-            messages: chatFromDB.messages.reverse().forEach(message => {
-                message.written_at = Number(message.written_at);
-                message.id = Number(message.id);
-            }),
-            newMessages: chatFromDB.newMessages,
-        };
-    }
-
-    raw = await fetch("http://127.0.0.1:3000/user", {
-        method: "POST",
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            id:id
-        })
-    })
-
-    const userFromDB = await raw.json();
-
-
-    let user : User = {
-        id: Number(id),
-        name: userFromDB.name
-    }
-
-    return {
-        user: user,
-        chats: chatsFromDB,
     }
 });
 
@@ -101,7 +101,7 @@ export const actions : Actions = {
     },
 
     removeMessage: async(event) => {
-        await fetch(`http://127.0.0.1/messages/${event.params.messageId}`, {
+        await fetch(`http://127.0.0.1:3000/messages/${event.url.searchParams.get("messageId")}`, {
             method: "DELETE",
         });
     },
@@ -109,11 +109,8 @@ export const actions : Actions = {
     addMessage: async(event) => {
         let chatId = event.url.searchParams.get("id");
         let content = (await event.request.formData()).get("message") as string;
-
-        console.log(chatId);
-        console.log(content)
-
-        let aw = await fetch(`http://127.0.0.1:3000/chats/${chatId}/message`, {
+        
+        await fetch(`http://127.0.0.1:3000/chats/${chatId}/message`, {
             method:"PUT",
             headers: {
                 'Content-Type': 'application/json'

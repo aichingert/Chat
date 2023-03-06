@@ -265,7 +265,8 @@ AppDataSource.initialize().then(async () => {
         await chatController.newMessage(chatId);
 
         websocket.send(JSON.stringify({type: "message", action: "add", content: {
-                chat: {
+                message: {
+                    id: message.id,
                     chat_id: message.chat_id,
                     content: message.content,
                     sender: {name: user.name},
@@ -290,7 +291,7 @@ AppDataSource.initialize().then(async () => {
             return;
         }
 
-        await chatController.resetNewMessages(chatId);
+        console.log(await chatController.resetNewMessages(chatId));
             
         // 200 => OK
         res.sendStatus(200);
@@ -306,9 +307,19 @@ AppDataSource.initialize().then(async () => {
             return;
         }
 
+        const chat = await chatController.one(message.chat_id);
+
+        if(typeof chat === "string"){
+            // 404 => Not found
+            res.sendStatus(404);
+            return;
+        }
+
         await messageController.remove(message.id);
 
         websocket.send(JSON.stringify({type: "message", action: "remove", content: {
+                sentId: chat.user1_id,
+                toId: chat.user2_id,
                 chatId: message.chat_id,
                 msgId: message.id,
             }

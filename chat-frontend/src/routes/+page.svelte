@@ -1,19 +1,21 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
-    import type { Chat, Message } from "$lib/types";
-	import { onMount } from "svelte";
+	import { onMount, tick } from "svelte";
 	import type { PageData } from "./$types";
-
+    import {Chats, loadChats, addChat, addMessage, removeMessage} from "../stores/chatStores"
+	import type { Message, Chat } from "$lib/types";
+    
     export let data : PageData;
+    let user = data.user;
 
-    let currentChat : Chat;
+    let selectedChatId : number = 0;
+    $: selectedChat = $Chats.find(chat => chat.id === selectedChatId);
     let socket : WebSocket;
-    $: currentChat;
-    $: connection = false;
+    $: connection = false;  
     onMount(() => {
-        socket = new WebSocket(`ws://127.0.0.1:42069/?client&id=${data.user.id}`);
+        loadChats(data.chats);
+        socket = new WebSocket(`ws://127.0.0.1:42069/?client&id=${user.id}`);
         socket.onmessage = async(e) => {
-            console.log(e.data)
             let message : {
                 type:string, 
                 action:string, 
@@ -21,51 +23,25 @@
 
             if(message.type === "chat") {
                 if(message.action === "add"){
-                    data.chats.push({
-                        id: message.content.chatId,
-                        messages: [],
-                        newMessages: 0,
-                        recipient: {name : message.content.userName}
-                    })
+                    addChat(message.content)
                 }
             }
             if (message.type === "message"){
                 if(message.action === "add"){
-                    let chat = data.chats
-                        .filter(chat => chat.id == message.content.chat_id)[0];
-
-                    chat.messages.splice(0,0, {
-                            content: message.content.content,
-                            id: Number(message.content.id),
-                            sender: message.content.sender,
-                            written_at: Number(message.content.written_at)
-                        });
-
-                    chat.newMessages++;
-
-                    if(currentChat){
-                        if(currentChat.id == chat.id){
-                            if(currentChat.messages[0]?.sender.name != data.user.name){
-                                if((await fetch(`http://localhost:3000/chats/${currentChat.id}/read`)).ok){
-                                    currentChat.newMessages = 0;
-                                }
-                            }
-                        }
+                    addMessage(message.content);
+                    if(!selectedChat || selectedChat.messages[0]?.sender.name == data.user.name) return;
+                    if((await fetch(`http://localhost:3000/chats/${selectedChat.id}/read`)).ok){
+                        selectedChat.newMessages = 0;
                     }
-
-
-                    data.chats = data.chats;
-                    currentChat = currentChat;
-                    chat = chat;
                 }
                 if(message.action === "delete"){
-                    data.chats
-                        .filter(chat => chat.id == message.content.chatId)[0]
-                        .messages.filter(msg => msg.id != message.content.messageId)
-                    
+                    removeMessage(message.content);
+                    if(!selectedChat || selectedChat.messages[0]?.sender.name == data.user.name) return;
+                    if((await fetch(`http://localhost:3000/chats/${selectedChat.id}/read`)).ok){
+                        selectedChat.newMessages = 0;
+                    }
                 }
             }
-            data = data;
         }
         socket.onclose = () => connection = false
         socket.onopen = () => connection = true
@@ -98,7 +74,7 @@
             <div class="h-10 flex items-center bg-onedark-gray px-2 space-x-2">
                 <div class="rounded-full h-5 w-5 {connection ? "bg-onedark-green" : "bg-onedark-red"}"/>
                 <p class="md:text-lg text-xs">
-                    {data.user.name}
+                    {user.name}
                 </p>
                 <form class="flex w-full justify-end" method="post" action="?/logout" use:enhance>
                     <button type="submit">
@@ -114,46 +90,46 @@
                     <input name="chat" placeholder="add chat" class="placeholder-onedark-lightgray outline-none bg-inherit w-11/12">
                 </form> 
             </div>
-            <div class="h-[calc(100vh-5rem)] overflow-auto">
-                {#each data.chats as chat, i}
+            <div class="h-[calc(100vh-5rem)] overflow-auto space-x-2 ">
+                {#each $Chats as chat, i}
                     <!-- svelte-ignore a11y-click-events-have-key-events -->
-                    <div class="h-10 w-full flex items-center justify-center space-x-2 hover:bg-onedark-darkblue hover:cursor-pointer" on:click={async(e) => {
-                            currentChat = data.chats[i];
-                            if(currentChat.newMessages === 0) return;
-                            if(currentChat.messages[0]?.sender.name == data.user.name) return;
-                            if((await fetch(`http://localhost:3000/chats/${currentChat.id}/read`)).ok){
-                                currentChat.newMessages = 0;
-                                currentChat = currentChat;
-                                data = data;
-                            }
+                    <div class="h-10 w-full flex items-center justify-center hover:bg-onedark-darkblue hover:cursor-pointer" on:click={async(e) => {
+                        selectedChatId = $Chats[i].id;
+                        selectedChat = $Chats.find(chat => chat.id === selectedChatId);
+                        
+                        if(!selectedChat) return;
+                        if(selectedChat.newMessages === 0) return;
+                        if(selectedChat.messages[0]?.sender.name == data.user.name) return;
+                        if((await fetch(`http://localhost:3000/chats/${selectedChat.id}/read`)).ok){
+                            selectedChat.newMessages = 0;
+                        }
                         }}>
                         <p class="text-center text-xl">{chat.recipient.name}</p>
-                        {#if chat.newMessages !== 0 && chat.messages[0]?.sender.name != data.user.name }
+                        {#if chat.newMessages !== 0 && chat.messages[0]?.sender.name != user.name }
                         <div class="flex justify-center items-center rounded-full w-5 h-5 bg-onedark-red ">
                             <p class="text-onedark-gray">{chat.newMessages}</p>
                         </div>
                         {/if}
-
                     </div>
                 {/each} 
             </div>
         </div>  
     </div>
-    {#if currentChat}
+    {#if selectedChat }
     <div class="col-span-5 h-screen bg-onedark-darkblue">
         <div>
             <div class="flex justify-center items-center h-10 px-2 bg-onedark-gray">
-                <p class="text-center w-full text-2xl">{currentChat.recipient.name}</p>
+                <p class="text-center w-full text-2xl">{selectedChat.recipient.name}</p>
             </div>
-            <div use:scrollToBottom class="flex flex-col-reverse px-4 rounded-md bg-onedark-gray h-[calc(100vh-7rem)] overflow-auto my-1">
-                {#each currentChat.messages as message, i}
+            <div use:scrollToBottom class="flex flex-col-reverse px-4 rounded-md bg-onedark-gray h-[calc(100vh-7rem)] overflow-auto my-1 space-y-4">
+                {#each selectedChat.messages as message}
                 <div class="w-full group">
                     <div class="w-full flex items-end space-x-2">
                         <p class="text-xl">{message.sender.name}</p>
                         <p class="text-[#667781] w-1/2">{formatDate(message.written_at)}</p>
-                        {#if message.sender.name === data.user.name}
-                        <div class="group-hover:visible w-full flex justify-end">
-                            <form method="post" action="?/removeMessage&messageId=${message.id}" use:enhance>
+                        {#if message.sender.name === user.name}
+                        <div class="flex w-full justify-end">
+                            <form method="post" action="?/removeMessage&messageId={message.id}" class="group-hover:block hidden" use:enhance>
                                 <button type="submit"> 
                                     <svg class="fill-onedark-red" height="20" viewBox="0 96 960 960" width="20"><path d="M312 912q-29.7 0-50.85-21.15Q240 869.7 240 840V360h-48v-72h192v-48h192v48h192v72h-48v479.566Q720 870 698.85 891 677.7 912 648 912H312Zm336-552H312v480h336V360ZM384 768h72V432h-72v336Zm120 0h72V432h-72v336ZM312 360v480-480Z"/></svg>
                                 </button>
@@ -167,10 +143,10 @@
             </div>
         </div>
         <!-- svelte-ignore a11y-autofocus -->
-        <form class="h-16 flex items-center w-full px-2 bg-onedark-gray rounded-md" method="post" action="?/addMessage&id={currentChat.id}" use:enhance={() => {
+        <form class="h-16 flex items-center w-full px-2 bg-onedark-gray rounded-md" method="post" action="?/addMessage&id={selectedChat.id}" use:enhance={() => {
             messageInput.value = "";
         }}>
-            <input bind:this={messageInput} name="message" autofocus placeholder="message to {currentChat.recipient.name}" class="outline-none h-10 w-11/12 bg-inherit px-2">
+            <input bind:this={messageInput} name="message" autofocus placeholder="message to {selectedChat.recipient.name}" class="outline-none h-10 w-11/12 bg-inherit px-2">
             <button type="submit" class="w-1/12 flex justify-center">
                 <svg class="fill-onedark-white" height="40" viewBox="0 96 960 960" width="40"><path d="M120 896V256l760 320-760 320Zm66.666-101.999L707.334 576 186.666 355.999v158.668L428 576l-241.334 60v158.001Zm0 0V355.999 794.001Z"/></svg>
             </button>
