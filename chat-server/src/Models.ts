@@ -1,6 +1,4 @@
 import WS from "ws";
-import {getUser} from "./index";
-import axios, {AxiosResponse} from "axios";
 export class ExpressSocket {
     constructor(public readonly ws: WS.WebSocket) {}
 }
