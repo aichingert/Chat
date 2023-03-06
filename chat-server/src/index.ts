@@ -1,35 +1,15 @@
 import ws from "ws";
 import {IncomingMessage} from "http"
-import {Chat, ExpressSocket, Message, WebSocketWrapper} from "./Models";
-import axios, {Axios, AxiosResponse} from "axios";
+import {ExpressSocket, WebSocketWrapper} from "./Models";
 require("dotenv").config();
 
 const wss = new ws.Server({ port: 42069 });
 let bot: ExpressSocket | null = null;
 let approvedIds: number[] = [];
 let webSocketWrappers: WebSocketWrapper[] = [];
-let loadedChats: Chat[] = [];
 
 function getUsers(id: number): WebSocketWrapper[] {
     return webSocketWrappers.filter((ws: WebSocketWrapper) => ws.id === id);
-}
-
-async function getChat(chatId: number) {
-    let chat: Chat | undefined = loadedChats.find((chat: Chat) => chat.chatId === chatId);
-
-    if (!chat) {
-        let res: AxiosResponse<Chat, any>;
-
-        try {
-            res = await axios.get(`http://127.0.0.1:3000/chats/${chatId}`);
-            chat = res.data;
-            loadedChats.push(chat);
-        } catch (e) {
-            console.error(e);
-            return;
-        }
-    }
-    return chat
 }
 
 wss.on("connection", (ws: ws.WebSocket, request: IncomingMessage) => {
