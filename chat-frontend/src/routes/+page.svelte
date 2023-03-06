@@ -9,44 +9,54 @@
     let currentChat : Chat;
     let socket : WebSocket;
     $: currentChat;
-    $: connection = true;
+    $: connection = false;
     onMount(() => {
         socket = new WebSocket(`ws://127.0.0.1:42069/?client&id=${data.user.id}`);
         socket.onmessage = async(e) => {
             console.log(e.data)
-            try {
-                let retard = JSON.parse(e.data);
-                let messageWhereChatShouldBe = data.chats.filter(chat => chat.id === retard.chat_id)[0];
-                messageWhereChatShouldBe.messages.splice(0,0,{content:retard.content, sender: {name:retard.sender.name}, written_at:retard.written_at})
-                data = data;
-                if(currentChat === messageWhereChatShouldBe){
-                    if(messageWhereChatShouldBe.messages[0].sender.name !== data.user.name){
-                        if((await fetch(`http://localhost:3000/chats/${currentChat.id}/read`)).ok)
-                        {
-                            currentChat.newMessages = 0;
-                            data = data;
-                        } 
-                    }
-                }
-                else {
-                    messageWhereChatShouldBe.newMessages++;
-                    messageWhereChatShouldBe = messageWhereChatShouldBe;
-                }
-                currentChat = currentChat;
-            }
-            catch{
-                let contactName = e.data.split(":")[0];
-                let chadId = Number(e.data.split(":")[1]);
+            let message : {
+                type:string, 
+                action:string, 
+                content: any } = JSON.parse(e.data);
 
-                data.chats.push({
-                    id: chadId,
-                    messages: [],
-                    newMessages: 0,
-                    recipient: {name:contactName}
-                })
-                data = data;
+            if(message.type === "chat") {
+                if(message.action === "add"){
+                    data.chats.push({
+                        id: message.content.chatId,
+                        messages: [],
+                        newMessages: 0,
+                        recipient: message.content.recipient
+                    })
+                }
             }
+            if (message.type === "message"){
+                if(message.action === "add"){
+                    let chat = data.chats
+                        .filter(chat => chat.id == message.content.chat_id)[0];
+
+                    chat.messages.splice(0,0, {
+                            content: message.content.content,
+                            id: Number(message.content.id),
+                            sender: message.content.sender,
+                            written_at: Number(message.content.written_at)
+                        });
+
+                    chat.newMessages++;
+                    data.chats = data.chats;
+                    currentChat = currentChat;
+                    chat = chat;
+                }
+                if(message.action === "delete"){
+                    data.chats
+                        .filter(chat => chat.id == message.content.chatId)[0]
+                        .messages.filter(msg => msg.id != message.content.messageId)
+                    
+                }
+            }
+            data = data;
         }
+        socket.onclose = () => connection = false
+        socket.onopen = () => connection = true
         connection = window.navigator.onLine;
         window.addEventListener("online", () => connection = true);
         window.addEventListener("offline", () => connection = false);
@@ -97,19 +107,15 @@
                     <!-- svelte-ignore a11y-click-events-have-key-events -->
                     <div class="h-10 w-full flex items-center justify-center space-x-2 hover:bg-onedark-darkblue hover:cursor-pointer" on:click={async(e) => {
                             currentChat = data.chats[i];
-                            if(currentChat.newMessages !== 0){
-                                if(currentChat.messages[0].sender.name !== data.user.name){
-                                    if((await fetch(`http://localhost:3000/chats/${currentChat.id}/read`)).ok)
-                                    {
-                                        currentChat.newMessages = 0;
-                                        currentChat = currentChat;
-                                        data = data;
-                                    } 
-                                }
-                            } 
+                            if(currentChat.newMessages === 0) return;
+                            if(currentChat.messages[0]?.sender.name == data.user.name) return;
+                            if(!(await fetch(`http://localhost:3000/chats/${currentChat.id}/read`)).ok) return;
+                            currentChat.newMessages = 0;
+                            currentChat = currentChat;
+                            data = data;
                         }}>
                         <p class="text-center text-xl">{chat.recipient.name}</p>
-                        {#if chat.newMessages !== 0 && chat.messages[0].sender.name !== data.user.name }
+                        {#if chat.newMessages !== 0 && chat.messages[0]?.sender.name != data.user.name }
                         <div class="flex justify-center items-center rounded-full w-5 h-5 bg-onedark-red ">
                             <p class="text-onedark-gray">{chat.newMessages}</p>
                         </div>
@@ -134,9 +140,11 @@
                         <p class="text-[#667781] w-1/2">{formatDate(message.written_at)}</p>
                         {#if message.sender.name === data.user.name}
                         <div class="group-hover:visible w-full flex justify-end">
-                            <button>
-                                <svg class="fill-onedark-red" height="20" viewBox="0 96 960 960" width="20"><path d="M312 912q-29.7 0-50.85-21.15Q240 869.7 240 840V360h-48v-72h192v-48h192v48h192v72h-48v479.566Q720 870 698.85 891 677.7 912 648 912H312Zm336-552H312v480h336V360ZM384 768h72V432h-72v336Zm120 0h72V432h-72v336ZM312 360v480-480Z"/></svg>
-                            </button>
+                            <form method="post" action="?/removeMessage&messageId=${message.id}" use:enhance>
+                                <button type="submit"> 
+                                    <svg class="fill-onedark-red" height="20" viewBox="0 96 960 960" width="20"><path d="M312 912q-29.7 0-50.85-21.15Q240 869.7 240 840V360h-48v-72h192v-48h192v48h192v72h-48v479.566Q720 870 698.85 891 677.7 912 648 912H312Zm336-552H312v480h336V360ZM384 768h72V432h-72v336Zm120 0h72V432h-72v336ZM312 360v480-480Z"/></svg>
+                                </button>
+                            </form>
                         </div>
                         {/if}
                     </div>
@@ -145,18 +153,11 @@
                 {/each}
             </div>
         </div>
-        <form class="h-16 flex items-center w-full px-2 bg-onedark-gray rounded-md" on:submit={(e) => {
-            socket.send(JSON.stringify({
-                user_id: data.user.id,
-                chat_id: currentChat.id,
-                content: messageInput.value,
-                written_at: Date.now()
-            }));
+        <!-- svelte-ignore a11y-autofocus -->
+        <form class="h-16 flex items-center w-full px-2 bg-onedark-gray rounded-md" method="post" action="?/addMessage&id={currentChat.id}" use:enhance={() => {
             messageInput.value = "";
-            messageInput.focus();
         }}>
-            <!-- svelte-ignore a11y-autofocus -->
-            <input bind:this={messageInput} autofocus placeholder="message to {currentChat.recipient.name}" class="outline-none h-10 w-11/12 bg-inherit px-2">
+            <input bind:this={messageInput} name="message" autofocus placeholder="message to {currentChat.recipient.name}" class="outline-none h-10 w-11/12 bg-inherit px-2">
             <button type="submit" class="w-1/12 flex justify-center">
                 <svg class="fill-onedark-white" height="40" viewBox="0 96 960 960" width="40"><path d="M120 896V256l760 320-760 320Zm66.666-101.999L707.334 576 186.666 355.999v158.668L428 576l-241.334 60v158.001Zm0 0V355.999 794.001Z"/></svg>
             </button>

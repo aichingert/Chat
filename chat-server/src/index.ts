@@ -80,7 +80,11 @@ wss.on("connection", (ws: ws.WebSocket, request: IncomingMessage) => {
                             let chat = action.content.chat;
 
                             let users: WebSocketWrapper[] = getUsers(action.content.userId1);
-                            users.concat(getUsers(action.content.userId2));
+                            users.push(... getUsers(action.content.userId2));
+
+                            console.log(users)
+                            console.log(action)
+                            console.log(approvedIds)
 
                             if (users.length !== 0) {
                                 users.forEach((user: WebSocketWrapper) => user.send(JSON.stringify({

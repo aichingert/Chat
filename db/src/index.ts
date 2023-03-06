@@ -28,6 +28,8 @@ AppDataSource.initialize().then(async () => {
     app.use(bodyParser.urlencoded({ extended: false }));
     app.use(cors());
 
+    messageController.removeAll();
+
     // Express entry points
 
     app.post("/login", async (req: Request, res: Response): Promise<void> => {
@@ -146,6 +148,7 @@ AppDataSource.initialize().then(async () => {
             if(typeof recipient === "string") return;
 
             let parsedMessages : {
+                id:number,
                 content: string,
                 written_at: number,
                 sender: {
@@ -160,6 +163,7 @@ AppDataSource.initialize().then(async () => {
                 if(typeof sender === "string") return;
 
                 parsedMessages.push({
+                    id: message.id,
                     content: message.content,
                     sender: { name: sender.name },
                     written_at: message.written_at
@@ -244,6 +248,7 @@ AppDataSource.initialize().then(async () => {
         const chatId = Number.parseInt(req.params.chatId);
 
         const message: Message = req.body;
+
         const chat: Chat | string = await chatController.one(chatId);
 
         let user: User| string = await userController.one(message.user_id);
@@ -360,7 +365,7 @@ AppDataSource.initialize().then(async () => {
     app.listen(port);
 
     // Test users, chats and messages => for testing
-    await loadTestData();
+    //await loadTestData();
 
     console.log(`Express server has started on port ${port}.`);
 }).catch(error => console.log(error))

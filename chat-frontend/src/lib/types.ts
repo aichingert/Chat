@@ -11,6 +11,7 @@ export interface Chat {
 }
 
 export interface Message {
+    id:number,
     content: string,
     written_at: number,
     sender: Contact,
