@@ -47,7 +47,7 @@ AppDataSource.initialize().then(async () => {
             return;
         }
 
-        websocket.send("approve " + dbUser.id);
+        websocket.send(JSON.stringify({type: "ids", action: "add", content: {id: dbUser.id}}));
 
         // 302 => Found
         res.status(302).send(JSON.stringify(dbUser.id));
@@ -64,7 +64,7 @@ AppDataSource.initialize().then(async () => {
             return;
         }
 
-        websocket.send("disapprove " + dbUser.id);
+        websocket.send(JSON.stringify({type: "ids", action: "remove", content: {id: dbUser.id}}));
 
         // 302 => Found
         res.sendStatus(302);
@@ -87,7 +87,7 @@ AppDataSource.initialize().then(async () => {
 
         const id: number = (await userController.save(user)).id;
 
-        websocket.send("approve " + id);
+        websocket.send(JSON.stringify({type: "ids", action: "add", content: {id: id}}));
 
         res.status(201).send(JSON.stringify(id));
     });
@@ -208,7 +208,6 @@ AppDataSource.initialize().then(async () => {
         }
 
         res.status(200).send(JSON.stringify(arr));
-
     })
 
     app.get("/chats/:chatId", async (req: Request, res: Response): Promise<void> => {
@@ -220,10 +219,25 @@ AppDataSource.initialize().then(async () => {
             return;
         }
 
-        let ids: number[] = [chat.user1_id, chat.user2_id];
+        const userOne: User | string = await userController.one(chat.user1_id);
+        const userTwo: User | string  = await userController.one(chat.user2_id);
 
-        // 202 => Found
-        res.status(202).send(JSON.stringify({webSocketIds: ids, chatId: chat.id}));
+        if (typeof userOne === "string" || typeof userTwo === "string") {
+            res.sendStatus(404);
+            return;
+        }
+
+        websocket.send(JSON.stringify({type: "chat", action: "add", content: {
+                chatId: chat.id,
+                sentId: userOne.id,
+                toId: userTwo.id,
+                sentName: userOne.name,
+                toName: userTwo.name,
+            }}
+        ));
+
+        // 200 => Ok
+        res.sendStatus(200);
     });
 
     app.put("/chats/:chatId/message", async (req: Request, res: Response) => {
@@ -243,13 +257,20 @@ AppDataSource.initialize().then(async () => {
         await messageController.save(message);
         await chatController.newMessage(chatId);
 
-        // 201 => Created
-        res.status(201).send(JSON.stringify({
-            chat_id: message.chat_id,
-            content: message.content,
-            sender: {name: user.name},
-            written_at: message.written_at
+        websocket.send(JSON.stringify({type: "message", action: "add", content: {
+                chat: {
+                    chat_id: message.chat_id,
+                    content: message.content,
+                    sender: {name: user.name},
+                    written_at: message.written_at,
+                },
+                userId1: chat.user1_id,
+                userId2: chat.user2_id,
+            }
         }));
+
+        // 200 => Okay
+        res.sendStatus(200);
     });
 
     app.get("/chats/:chatId/read", async (req: Request, res: Response) => {
@@ -268,14 +289,23 @@ AppDataSource.initialize().then(async () => {
         res.sendStatus(200);
     });
 
-    app.get("/messages/:messageId/delete", async (req: Request, res: Response) => {
-        const messageCode: string = await messageController.remove(Number.parseInt(req.params.messageId));
+    app.delete("/messages/:messageId", async (req: Request, res: Response) => {
+        const messageId: number = Number.parseInt(req.params.messageId);
+        const message: Message | string = await messageController.one(messageId);
 
-        if(messageCode === "Message does not exist"){
+        if (typeof message === "string") {
             // 404 => Not found
             res.sendStatus(404);
             return;
         }
+
+        await messageController.remove(message.id);
+
+        websocket.send(JSON.stringify({type: "message", action: "remove", content: {
+                chatId: message.chat_id,
+                msgId: message.id,
+            }
+        }));
 
         // 200 => OK
         res.sendStatus(200);
@@ -300,9 +330,14 @@ AppDataSource.initialize().then(async () => {
         chat.user2_id = userTwo.id;
         chat.new = 0;
 
-        let a = await chatController.save(chat);
+        const newChat = await chatController.save(chat);
 
-        websocket.send(`chat ${userOne.id} ${userTwo.id} ${userOne.name} ${userTwo.name} ${a.id}`);
+        websocket.send(JSON.stringify({type: "chat", action: "add", content: {
+                chatId: newChat.id,
+                sentName: userOne.name,
+                toName: userTwo.name,
+            }
+        }));
 
         // 201 => Created
         res.sendStatus(201);
