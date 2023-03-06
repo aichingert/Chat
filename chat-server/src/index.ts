@@ -77,7 +77,7 @@ wss.on("connection", (ws: ws.WebSocket, request: IncomingMessage) => {
                 case "message":
                     switch (action.action) {
                         case "add":
-                            let chat = action.content.chat;
+                            let message = action.content.message;
 
                             let users: WebSocketWrapper[] = getUsers(action.content.userId1);
                             users.push(... getUsers(action.content.userId2));
@@ -86,7 +86,7 @@ wss.on("connection", (ws: ws.WebSocket, request: IncomingMessage) => {
                                 users.forEach((user: WebSocketWrapper) => user.send(JSON.stringify({
                                     type: "message",
                                     action: "add",
-                                    content: chat
+                                    content: message
                                 })));
                             }
                         break;
