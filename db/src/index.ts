@@ -348,6 +348,19 @@ AppDataSource.initialize().then(async () => {
         chat.user2_id = userTwo.id;
         chat.new = 0;
 
+        const chatCheckOne: Chat[] | string = await chatController.getUserChats(userIDOne);
+
+        if(typeof chatCheckOne === "string"){
+            res.sendStatus(404);
+            return;
+        }
+
+        if(chatCheckOne.find(c => (c.user1_id == userIDOne && c.user2_id == userTwo.id) || (c.user2_id == userIDOne && c.user1_id == userTwo.id)))
+        {
+            res.sendStatus(404);
+            return;
+        }
+
         const newChat = await chatController.save(chat);
 
         websocket.send(JSON.stringify({type: "chat", action: "add", content: {
