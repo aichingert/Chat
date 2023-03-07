@@ -90,7 +90,7 @@
                     <input name="chat" placeholder="add chat" class="placeholder-onedark-lightgray outline-none bg-inherit w-11/12">
                 </form> 
             </div>
-            <div class="h-[calc(100vh-5rem)] overflow-auto space-x-2 ">
+            <div class="h-[calc(100vh-5rem)] overflow-auto space-x-2">
                 {#each $Chats as chat, i}
                     <!-- svelte-ignore a11y-click-events-have-key-events -->
                     <div class="h-10 w-full flex items-center justify-center hover:bg-onedark-darkblue hover:cursor-pointer" on:click={async(e) => {

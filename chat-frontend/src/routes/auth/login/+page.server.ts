@@ -24,7 +24,7 @@ export const actions : Actions = {
         let response = await raw.text();
         cookies.set("id", response, {
             maxAge: 60*60*24,
-            secure: true,
+            secure: false,
             path:"/",
         });
         throw redirect(300, "/");
