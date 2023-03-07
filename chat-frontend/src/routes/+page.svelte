@@ -62,7 +62,7 @@
 
     const formatDate = (written_at : number) => {
         let date = new Date(written_at);
-        return `${date.toLocaleDateString()} at ${date.getHours()}:${date.getMinutes()}`
+        return `${date.toLocaleDateString()} at ${date.getHours()}:${date.getMinutes() > 10 ? date.getMinutes() : `0t${date.getMinutes()}`}`
     }
 
     let messageInput : HTMLInputElement;
