@@ -8,7 +8,15 @@ export const actions : Actions = {
     login: async({request, cookies, fetch}) => {
         let data = await request.formData();
         let username = data.get("username") as string;
-        let password = await digestMessage(data.get("password") as string);
+        username = username.trim();
+        let password = data.get("password") as string;
+        password = password.trim();
+
+        if(username.length === 0) return;
+        if(password.length === 0) return;
+
+        password = await digestMessage(password);
+
         
         let raw = await fetch("http://127.0.0.1:3000/login", {
             method: "POST",

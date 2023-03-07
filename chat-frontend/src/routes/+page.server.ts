@@ -109,6 +109,8 @@ export const actions : Actions = {
     addMessage: async(event) => {
         let chatId = event.url.searchParams.get("id");
         let content = (await event.request.formData()).get("message") as string;
+
+        if(content.trim().length === 0) return;
         
         await fetch(`http://127.0.0.1:3000/chats/${chatId}/message`, {
             method:"PUT",

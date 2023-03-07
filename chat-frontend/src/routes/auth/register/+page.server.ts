@@ -6,7 +6,14 @@ export const actions : Actions = {
     register: async(event) => {
         let data = await event.request.formData();
         let username = data.get("username") as string;
-        let password = await digestMessage(data.get("password") as string);
+        username = username.trim();
+        let password = data.get("password") as string;
+        password = password.trim();
+
+        if(username.length === 0) return;
+        if(password.length === 0) return;
+
+        password = await digestMessage(password);
 
         let raw = await fetch("http://127.0.0.1:3000/register", {
             method: "POST",
