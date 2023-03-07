@@ -28,7 +28,7 @@
             }
             if (message.type === "message"){
                 if(message.action === "add"){
-                    addMessage(message.content);
+                    addMessage(message.content, selectedChat);
                     if(!selectedChat || selectedChat.messages[0]?.sender.name == data.user.name) return;
                     if((await fetch(`http://localhost:3000/chats/${selectedChat.id}/read`)).ok){
                         selectedChat.newMessages = 0;

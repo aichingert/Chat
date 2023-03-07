@@ -36,7 +36,7 @@ export const addChat = (content : any) => {
         }]));
 }
 
-export const addMessage = (content : any) => {
+export const addMessage = (content : any, currentChat : Chat | undefined) => {
     Chats.update((chats) => {
         let chat = chats.find(chat => chat.id === Number(content.chat_id))
         if(!chat) return;
@@ -48,10 +48,10 @@ export const addMessage = (content : any) => {
             written_at: Number(content.written_at)
         };
 
-        if(typeof chat.messages === "number") return chats;
-
         chat.messages.unshift(message);
-        chat.newMessages++;
+
+        if(!currentChat) chat.newMessages++;
+        if(currentChat && currentChat.id != chat.id) chat.newMessages++;
 
         return chats;
     });
