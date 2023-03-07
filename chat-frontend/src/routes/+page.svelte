@@ -7,6 +7,7 @@
     
     export let data : PageData;
     let user = data.user;
+    const ip: string = "localhost";
 
     let selectedChatId : number = 0;
     $: selectedChat = $Chats.find(chat => chat.id === selectedChatId);
@@ -14,7 +15,7 @@
     $: connection = false;  
     onMount(() => {
         loadChats(data.chats);
-        socket = new WebSocket(`ws://127.0.0.1:42069/?client&id=${user.id}`);
+        socket = new WebSocket(`ws://${ip}:42069/?client&id=${user.id}`);
         socket.onmessage = async(e) => {
             let message : {
                 type:string, 
@@ -30,14 +31,14 @@
                 if(message.action === "add"){
                     addMessage(message.content, selectedChat);
                     if(!selectedChat || selectedChat.messages[0]?.sender.name == data.user.name) return;
-                    if((await fetch(`http://localhost:3000/chats/${selectedChat.id}/read`)).ok){
+                    if((await fetch(`http://${ip}:3000/chats/${selectedChat.id}/read`)).ok){
                         selectedChat.newMessages = 0;
                     }
                 }
                 if(message.action === "delete"){
                     removeMessage(message.content);
                     if(!selectedChat || selectedChat.messages[0]?.sender.name == data.user.name) return;
-                    if((await fetch(`http://localhost:3000/chats/${selectedChat.id}/read`)).ok){
+                    if((await fetch(`http://${ip}:3000/chats/${selectedChat.id}/read`)).ok){
                         selectedChat.newMessages = 0;
                     }
                 }
@@ -100,7 +101,7 @@
                         if(!selectedChat) return;
                         if(selectedChat.newMessages === 0) return;
                         if(selectedChat.messages[0]?.sender.name == data.user.name) return;
-                        if((await fetch(`http://localhost:3000/chats/${selectedChat.id}/read`)).ok){
+                        if((await fetch(`http://${ip}:3000/chats/${selectedChat.id}/read`)).ok){
                             selectedChat.newMessages = 0;
                         }
                         }}>
